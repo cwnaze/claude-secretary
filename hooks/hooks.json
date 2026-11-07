@@ -1,0 +1,18 @@
+{
+  "description": "Secretary guard: enforces send_email / send_invites / manage_calendar / contact_people permissions on MCP tools",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/guard.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "claude-secretary",
+  "version": "1.0.0",
+  "description": "The Secretary plugin for Claude Code: briefings, inbox triage, calendar, meetings, follow-ups, contacts and expenses stored in your Obsidian vault, with outbound actions off by default and enforced by a hook.",
+  "type": "module",
+  "bin": {
+    "claude-secretary": "cli/claude-secretary.mjs"
+  },
+  "files": [
+    ".claude-plugin/",
+    "bin/",
+    "cli/",
+    "hooks/",
+    "skills/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "agent-skills",
+    "skills",
+    "secretary",
+    "assistant",
+    "obsidian",
+    "calendar",
+    "ics",
+    "cloudflare-r2",
+    "claude-code-plugin",
+    "hooks"
+  ],
+  "license": "MIT",
+  "author": "Casey Nazelrod",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cwnaze/claude-secretary.git"
+  },
+  "homepage": "https://github.com/cwnaze/claude-secretary#readme"
+}

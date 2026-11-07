@@ -1,0 +1,4 @@
+#!/bin/sh
+# claude-secretary helper; on Claude's PATH while the plugin is enabled.
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec node "$here/../skills/secretary/scripts/sec.mjs" "$@"
