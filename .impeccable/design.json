@@ -1,0 +1,324 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-10T22:25:18.334Z",
+  "title": "Design System: Secretary",
+  "extensions": {
+    "colorMeta": {
+      "ribbon-red": {
+        "role": "primary",
+        "displayName": "Ribbon Red",
+        "canonical": "oklch(56.5% 0.175 30.4)",
+        "tonalRamp": [
+          "oklch(15% 0.086 30.4)",
+          "oklch(25% 0.108 30.4)",
+          "oklch(36% 0.133 30.4)",
+          "oklch(48% 0.160 30.4)",
+          "oklch(60% 0.164 30.4)",
+          "oklch(72% 0.137 30.4)",
+          "oklch(84% 0.111 30.4)",
+          "oklch(95% 0.086 30.4)"
+        ]
+      },
+      "cloth-navy": {
+        "role": "secondary",
+        "displayName": "Cloth Navy",
+        "canonical": "oklch(29.2% 0.061 267.1)",
+        "tonalRamp": [
+          "oklch(15% 0.030 267.1)",
+          "oklch(25% 0.038 267.1)",
+          "oklch(36% 0.046 267.1)",
+          "oklch(48% 0.055 267.1)",
+          "oklch(60% 0.057 267.1)",
+          "oklch(72% 0.048 267.1)",
+          "oklch(84% 0.038 267.1)",
+          "oklch(95% 0.030 267.1)"
+        ]
+      },
+      "hour-blue": {
+        "role": "secondary",
+        "displayName": "Hour Blue",
+        "canonical": "oklch(50.2% 0.072 253.4)",
+        "tonalRamp": [
+          "oklch(15% 0.035 253.4)",
+          "oklch(25% 0.044 253.4)",
+          "oklch(36% 0.054 253.4)",
+          "oklch(48% 0.065 253.4)",
+          "oklch(60% 0.067 253.4)",
+          "oklch(72% 0.056 253.4)",
+          "oklch(84% 0.045 253.4)",
+          "oklch(95% 0.035 253.4)"
+        ]
+      },
+      "rule-blue": {
+        "role": "tertiary",
+        "displayName": "Rule Blue",
+        "canonical": "oklch(80.1% 0.044 249.5)",
+        "tonalRamp": [
+          "oklch(15% 0.022 249.5)",
+          "oklch(25% 0.027 249.5)",
+          "oklch(36% 0.033 249.5)",
+          "oklch(48% 0.040 249.5)",
+          "oklch(60% 0.041 249.5)",
+          "oklch(72% 0.035 249.5)",
+          "oklch(84% 0.028 249.5)",
+          "oklch(95% 0.022 249.5)"
+        ]
+      },
+      "page-ivory": {
+        "role": "neutral",
+        "displayName": "Page Ivory",
+        "canonical": "oklch(98.0% 0.010 87.5)",
+        "tonalRamp": [
+          "oklch(15% 0.005 87.5)",
+          "oklch(25% 0.006 87.5)",
+          "oklch(36% 0.007 87.5)",
+          "oklch(48% 0.009 87.5)",
+          "oklch(60% 0.009 87.5)",
+          "oklch(72% 0.008 87.5)",
+          "oklch(84% 0.006 87.5)",
+          "oklch(95% 0.005 87.5)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(25.2% 0.000 89.9)",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(25% 0.000 89.9)",
+          "oklch(36% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(60% 0.000 89.9)",
+          "oklch(72% 0.000 89.9)",
+          "oklch(84% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "hold-amber": {
+        "role": "neutral",
+        "displayName": "Hold Amber",
+        "canonical": "oklch(51.4% 0.105 74.7)",
+        "tonalRamp": [
+          "oklch(15% 0.051 74.7)",
+          "oklch(25% 0.065 74.7)",
+          "oklch(36% 0.079 74.7)",
+          "oklch(48% 0.095 74.7)",
+          "oklch(60% 0.098 74.7)",
+          "oklch(72% 0.082 74.7)",
+          "oklch(84% 0.066 74.7)",
+          "oklch(95% 0.051 74.7)"
+        ]
+      },
+      "ok-green": {
+        "role": "neutral",
+        "displayName": "OK Green",
+        "canonical": "oklch(47.9% 0.078 161.1)",
+        "tonalRamp": [
+          "oklch(15% 0.038 161.1)",
+          "oklch(25% 0.048 161.1)",
+          "oklch(36% 0.059 161.1)",
+          "oklch(48% 0.071 161.1)",
+          "oklch(60% 0.073 161.1)",
+          "oklch(72% 0.061 161.1)",
+          "oklch(84% 0.049 161.1)",
+          "oklch(95% 0.038 161.1)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Day title and full-page message titles."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Notes section headings and the wordmark."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Spend amounts in the figures strip."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Row titles and event names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default app text, tabular numerals."
+      },
+      "body-long": {
+        "displayName": "Body Long",
+        "purpose": "Briefing paragraph and message bodies, max 66ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Meta lines, subtitles, nav and stepper text."
+      },
+      "label-sm": {
+        "displayName": "Label Small",
+        "purpose": "Hour labels and status pills."
+      },
+      "ribbon-tag": {
+        "displayName": "Ribbon Tag",
+        "purpose": "Uppercase now tag on the ribbon only; not a general label style."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "150ms ease-out",
+        "purpose": "Background and color changes on nav links and stepper buttons."
+      },
+      {
+        "name": "state-block",
+        "value": "200ms ease-out",
+        "purpose": "Event block background change."
+      },
+      {
+        "name": "loading-settle",
+        "value": "1.2s ease-out infinite alternate (opacity 0.4 to 1)",
+        "purpose": "Ruled placeholder page while the day loads."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "All animation and transition durations under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "560px"
+      },
+      {
+        "name": "nav-wrap",
+        "value": "720px"
+      },
+      {
+        "name": "single-page",
+        "value": "1023px"
+      },
+      {
+        "name": "vault-hide",
+        "value": "1100px"
+      },
+      {
+        "name": "spread-max",
+        "value": "1600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Cloth Nav Bar",
+      "kind": "nav",
+      "refersTo": "nav-bar",
+      "description": "Sticky navy top bar: serif wordmark, section links with current/hover washes, red count badges.",
+      "html": "<header class=\"ds-bar\"><a class=\"ds-brand\" href=\"#\">Secretary</a><nav class=\"ds-nav\"><a class=\"ds-link\" aria-current=\"page\" href=\"#\">Briefing</a><a class=\"ds-link\" href=\"#\">Schedule</a><a class=\"ds-link\" href=\"#\">Inbox<span class=\"ds-count\">3</span></a><a class=\"ds-link\" href=\"#\">Follow-ups<span class=\"ds-count\">2</span></a><a class=\"ds-link\" href=\"#\">Settings</a></nav><span class=\"ds-vault\">Vault: Notes / Secretary</span></header>",
+      "css": ".ds-bar{display:flex;align-items:center;gap:32px;min-height:56px;padding:0 32px;background:var(--cloth,#1e2a4a);color:var(--cloth-ink,#e9edf6);font:400 15px/1.5 'Public Sans',system-ui,sans-serif}.ds-brand{font:600 19px/1 'Source Serif 4',Georgia,serif;letter-spacing:.01em;text-decoration:none;color:inherit}.ds-nav{display:flex;gap:2px}.ds-link{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:6px;color:var(--cloth-mute,#b3bed6);font-weight:500;font-size:14px;text-decoration:none;transition:background-color 150ms ease-out,color 150ms ease-out}.ds-link:hover{color:var(--cloth-ink,#e9edf6);background:rgba(233,237,246,.08)}.ds-link[aria-current=page]{color:var(--cloth-ink,#e9edf6);background:rgba(233,237,246,.14)}.ds-link:focus-visible{outline:2px solid var(--cloth-ink,#e9edf6);outline-offset:2px}.ds-count{min-width:20px;padding:1px 6px;border-radius:10px;background:var(--margin,#c8402f);color:var(--margin-ink,#fff);font-size:11px;font-weight:700;line-height:16px;text-align:center}.ds-vault{margin-left:auto;color:var(--cloth-mute,#b3bed6);font-size:12.5px}"
+    },
+    {
+      "name": "Day Stepper",
+      "kind": "button",
+      "refersTo": "day-stepper-button",
+      "description": "Segmented previous / Today / next control beside the day title.",
+      "html": "<div class=\"ds-step\" role=\"group\" aria-label=\"Change day\"><button type=\"button\" aria-label=\"Previous day\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 3.5 5.5 8l4.5 4.5\"/></svg></button><button type=\"button\" disabled>Today</button><button type=\"button\" aria-label=\"Next day\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 3.5 10.5 8 6 12.5\"/></svg></button></div>",
+      "css": ".ds-step{display:inline-flex;border:1px solid var(--line,#e2dacb);border-radius:6px;overflow:hidden;background:var(--page,#fbf8f1);font-family:'Public Sans',system-ui,sans-serif}.ds-step button{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:30px;padding:0 10px;border:0;background:transparent;color:var(--ink-2,#57524b);font-size:13px;font-weight:500;cursor:pointer;transition:background-color 150ms ease-out,color 150ms ease-out}.ds-step button+button{border-left:1px solid var(--line,#e2dacb)}.ds-step button:hover:not(:disabled){background:var(--page-2,#f3eee2);color:var(--ink,#222)}.ds-step button:disabled{color:var(--ink-3,#6f6a62);cursor:default}.ds-step button:focus-visible{outline:2px solid var(--focus,#2f5ea8);outline-offset:-2px}"
+    },
+    {
+      "name": "Hour-ruled Day with Ribbon",
+      "kind": "custom",
+      "refersTo": "event-block",
+      "description": "Signature: hour rules with gutter labels, events placed on the rules, past dimmed, open slot dashed, red ribbon at now.",
+      "html": "<div class=\"ds-day\"><div class=\"ds-hr ds-past\"><span>4 pm</span></div><div class=\"ds-hr\"><span>5 pm</span></div><div class=\"ds-hr\"><span>6 pm</span></div><div class=\"ds-hr\"><span>7 pm</span></div><div class=\"ds-ev ds-ev-past\" style=\"top:3px;height:50px\"><b>Call with landlord</b><small>4–4:50 pm · Phone</small></div><div class=\"ds-ev\" style=\"top:59px;height:50px\"><b>Study block: COP 3530 graphs</b><small>5–5:50 pm · Library</small></div><div class=\"ds-free\" style=\"top:115px;height:109px\"><b>Open · 6–8 pm</b></div><div class=\"ds-ribbon\" style=\"top:78px\"><i>Now 5:21 pm</i></div></div>",
+      "css": ".ds-day{position:relative;margin-left:56px;font:400 15px/1.5 'Public Sans',system-ui,sans-serif;color:var(--ink,#222);background:var(--page,#fbf8f1);font-variant-numeric:tabular-nums}.ds-hr{display:grid;grid-template-columns:64px 1fr;height:56px;border-bottom:1px solid var(--rule-soft,#dbe5ef)}.ds-hr span{font-size:12px;font-weight:600;color:var(--hour,#46668c);padding-top:6px}.ds-hr.ds-past span{color:var(--ink-3,#6f6a62)}.ds-ev,.ds-free{position:absolute;left:64px;right:4px;padding:6px 12px;border-radius:4px}.ds-ev{background:var(--page-2,#f3eee2);border:1px solid var(--line,#e2dacb);transition:background-color 200ms ease-out}.ds-ev b{display:block;font-weight:600;font-size:14px;line-height:1.3}.ds-ev small{display:block;color:var(--ink-2,#57524b);font-size:12.5px}.ds-ev-past{background:var(--page,#fbf8f1);border-color:var(--rule-soft,#dbe5ef)}.ds-ev-past b{color:var(--ink-2,#57524b)}.ds-ev-past small{color:var(--ink-3,#6f6a62)}.ds-free{border:1px dashed var(--rule,#a9c1da);color:var(--ink-2,#57524b)}.ds-free b{font-size:13.5px;font-weight:600}.ds-ribbon{position:absolute;left:-56px;right:0;border-top:2px solid var(--margin,#c8402f);z-index:3}.ds-ribbon::before{content:'';position:absolute;left:14px;top:-2px;width:14px;height:34px;background:var(--margin,#c8402f);clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)}.ds-ribbon i{position:absolute;right:0;top:-20px;padding:1px 6px;border-radius:3px;background:var(--page,#fbf8f1);font:700 11px/16px 'Public Sans',system-ui,sans-serif;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--margin,#c8402f)}"
+    },
+    {
+      "name": "Notes Section with Rows and Pills",
+      "kind": "card",
+      "refersTo": "section-heading",
+      "description": "Right-page section: serif heading on a blue rule, ruled rows with outlined status pills.",
+      "html": "<section class=\"ds-notes\"><h2 class=\"ds-h2\">Inbox <small>2 drafts · sending is off</small><a class=\"ds-more\" href=\"#\">Open inbox</a></h2><div class=\"ds-row\"><span><b>Blocked: Claude tried to send an email</b><small>Gmail · send email · logged in Log.md</small></span><span class=\"ds-pill\" data-tone=\"alert\">Blocked</span></div><div class=\"ds-row\"><span><b>Re: Lease renewal, unit 4B</b><small>To Marcus Lee · drafted today 5:13 pm</small></span><span class=\"ds-pill\" data-tone=\"hold\">You send it</span></div><div class=\"ds-row\"><span><b>Send Priya the revised mockups</b><small>You promised Priya Shah</small></span><span class=\"ds-pill\" data-tone=\"due\">Due today</span></div><div class=\"ds-row\"><span><b>Weekly report</b><small>To team · drafted today</small></span><span class=\"ds-pill\" data-tone=\"ok\">Ready to send</span></div></section>",
+      "css": ".ds-notes{max-width:620px;font:400 15px/1.5 'Public Sans',system-ui,sans-serif;color:var(--ink,#222);background:var(--page,#fbf8f1);font-variant-numeric:tabular-nums}.ds-h2{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:10px;padding-bottom:8px;margin:0 0 4px;border-bottom:1px solid var(--rule,#a9c1da);font:600 19px/1.25 'Source Serif 4',Georgia,serif}.ds-h2 small{font:500 12.5px/1.4 'Public Sans',system-ui,sans-serif;color:var(--ink-2,#57524b)}.ds-more{margin-left:auto;font:500 13px/1.4 'Public Sans',system-ui,sans-serif;color:var(--hour,#46668c);text-underline-offset:3px}.ds-more:hover{color:var(--ink,#222)}.ds-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--rule-soft,#dbe5ef)}.ds-row b{display:block;font-weight:600}.ds-row small{display:block;margin-top:2px;color:var(--ink-2,#57524b);font-size:13px}.ds-pill{padding:3px 10px;border-radius:10px;border:1px solid currentColor;font-size:12px;font-weight:600;white-space:nowrap}.ds-pill[data-tone=hold]{color:var(--hold,#8a5d0c)}.ds-pill[data-tone=ok]{color:var(--ok,#2f6b4f)}.ds-pill[data-tone=due]{color:var(--hour,#46668c)}.ds-pill[data-tone=alert]{color:var(--margin,#c8402f)}"
+    },
+    {
+      "name": "Figures Strip",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "Spend figures in three ruled columns, serif numerals over sans captions; never tiles.",
+      "html": "<dl class=\"ds-figs\"><div><dt>5 expenses</dt><dd>$324.60</dd></div><div><dt>Top: Groceries</dt><dd>$129.20</dd></div><div><dt>You owe, due Nov 15</dt><dd>$1,250.00</dd></div></dl><p class=\"ds-alert\">Groceries: $129.20 of your $150.00 budget</p>",
+      "css": ".ds-figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;border-bottom:1px solid var(--rule-soft,#dbe5ef);font-family:'Public Sans',system-ui,sans-serif;color:var(--ink,#222);background:var(--page,#fbf8f1);font-variant-numeric:tabular-nums}.ds-figs div{display:flex;flex-direction:column-reverse;justify-content:flex-end;padding:12px 0}.ds-figs div+div{padding-left:18px;border-left:1px solid var(--rule-soft,#dbe5ef)}.ds-figs dd{margin:0;font:600 21px/1.2 'Source Serif 4',Georgia,serif}.ds-figs dt{margin-top:2px;font-size:12.5px;color:var(--ink-2,#57524b)}.ds-alert{margin-top:10px;color:var(--margin,#c8402f);font:600 13px/1.5 'Public Sans',system-ui,sans-serif}"
+    },
+    {
+      "name": "All-day Chip",
+      "kind": "chip",
+      "refersTo": "all-day-chip",
+      "description": "Shaded chip above the hours for all-day entries.",
+      "html": "<ul class=\"ds-allday\"><li><span>All day</span>Priya's birthday</li><li><span>All day</span>Rent due</li></ul>",
+      "css": ".ds-allday{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;font-family:'Public Sans',system-ui,sans-serif;color:var(--ink,#222)}.ds-allday li{display:inline-flex;gap:8px;align-items:baseline;padding:4px 10px;border-radius:4px;background:var(--page-2,#f3eee2);border:1px solid var(--line,#e2dacb);font-weight:600;font-size:13.5px}.ds-allday span{font-weight:500;font-size:12px;color:var(--hour,#46668c)}"
+    },
+    {
+      "name": "Day Title",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "Display serif date with week meta, underlined by the 2px ribbon-red rule.",
+      "html": "<div class=\"ds-head\"><h1>Tuesday 10 November</h1><p>Week 46 · 5 events · 3h open</p></div>",
+      "css": ".ds-head{padding-bottom:14px;border-bottom:2px solid var(--margin,#c8402f);color:var(--ink,#222);font-family:'Public Sans',system-ui,sans-serif}.ds-head h1{margin:0;font:600 34px/1.1 'Source Serif 4',Georgia,serif;letter-spacing:-.01em}.ds-head p{margin:4px 0 0;color:var(--ink-2,#57524b);font-size:13px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Day-to-a-Page Diary",
+    "overview": "The dashboard is a desk diary opened flat: a navy cloth cover across the top, an ivory page beneath it, pale blue rules marking the hours, and a red ribbon laid across the page at the current time. Everything the user reads sits on the page as ink, not in boxes floating above it. Structure comes from ruled lines (hour rules, section underlines, row dividers, the spine down the middle of the spread), and the only saturated color on the page is the ribbon red, which means \"now\" or \"this needs you.\"\n\nThe home spread is two facing pages: the hour-ruled day on the left, the day's notes (briefing, inbox holds, follow-ups, spend, people) on the right, divided by a single hairline spine. Density is calm and legible, a diary rather than a terminal: one 15px sans body, serif only where a diary would print a heading or a figure. Light and dark are both first-class and follow the system setting; dark keeps the same ribbon on a navy-black page with ivory ink.\n\nThe world explicitly refuses the stat-tile card grid: figures sit in ruled columns on the page, and no surface lifts off it with a shadow.",
+    "keyCharacteristics": [
+      "Navy cloth shell, ivory page, blue hour rules, red ribbon.",
+      "Depth by rules and tonal page shades, never by shadow.",
+      "Serif for headings and figures, sans for everything read or scanned.",
+      "Tabular numerals everywhere, so times and amounts align.",
+      "Red reserved for now and attention."
+    ],
+    "rules": [
+      {
+        "name": "The One Ribbon Rule",
+        "body": "Ribbon Red marks the present moment and things that need the user (alerts, overdue, blocked, unread counts). It never decorates, never fills a panel, and never marks a merely \"important\" heading.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Blues Rule",
+        "body": "Rule Blue and Rule Soft draw lines; Hour Blue carries text. Do not set text in the rule blues, and do not draw hour or row rules in Hour Blue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Printed Heading Rule",
+        "body": "Serif appears only where a diary would print: the date, a section head, a figure. Rows, labels, pills and buttons are sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Aligned Numbers Rule",
+        "body": "Tabular numerals are on globally; times, counts and amounts must line up down a column. Do not switch them off.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Page Rule",
+        "body": "Surfaces are paper on paper. If an element needs to stand out, give it Page Shade or a rule, not a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do rule the page: section underlines in Rule Blue, row and hour dividers in Rule Soft, hairlines in Line.",
+      "Do keep Ribbon Red for now and attention (alerts, overdue, blocked, unread counts, the day-title underline).",
+      "Do sink the past: past hours and events step down to Ink Faint / Ink Soft and Page Ivory rather than disappearing.",
+      "Do set every time, count and amount in tabular numerals.",
+      "Do give both themes equal care; every color role has a dark value, and dark keeps the same ribbon.",
+      "Do use stroked inline SVG for icons (16px, 1.75 stroke, round caps), as the stepper chevrons do."
+    ],
+    "donts": [
+      "Don't lay out summaries as a grid of stat-tile cards; figures sit in ruled columns on the page.",
+      "Don't add shadows or raised surfaces; the page is flat.",
+      "Don't fill status pills; they are outlined in their tone.",
+      "Don't use serif for rows, labels, buttons or running text.",
+      "Don't set text in Rule Blue or Rule Soft; they only draw lines.",
+      "Don't extend the uppercase, letter-spaced Ribbon Tag style to section labels or kickers above headings; it belongs to the ribbon alone."
+    ]
+  }
+}
