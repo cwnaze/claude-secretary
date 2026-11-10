@@ -1,0 +1,17 @@
+{
+  "name": "cwnaze",
+  "owner": {
+    "name": "Casey Nazelrod",
+    "url": "https://github.com/cwnaze"
+  },
+  "metadata": {
+    "description": "Claude Code plugins by Casey Nazelrod"
+  },
+  "plugins": [
+    {
+      "name": "secretary",
+      "source": "./",
+      "description": "Claude as your secretary, backed by your Obsidian vault. Outbound actions off by default."
+    }
+  ]
+}
