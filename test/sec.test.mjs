@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import http from 'node:http';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseCalendar, occurrences, addEvent, rewriteEvent, freeSlots } from '../skills/secretary/scripts/lib/ics.mjs';
 import { zonedToUtc, formatLocal } from '../skills/secretary/scripts/lib/tz.mjs';
 import { parseFrontmatter, setNoteFields, readNoteText } from '../skills/secretary/scripts/lib/yaml.mjs';
 import { classify, decide } from '../skills/secretary/scripts/lib/guard.mjs';
+import { createServer, listen, isLocalHost, resolveStatic } from '../skills/secretary/scripts/lib/server.mjs';
+import { leadParagraph } from '../skills/secretary/scripts/lib/dashboard.mjs';
+import { loadConfig } from '../skills/secretary/scripts/lib/config.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SEC = path.join(here, '..', 'skills', 'secretary', 'scripts', 'sec.mjs');
@@ -253,6 +257,47 @@ test('guard hook: end to end over stdin', () => {
   fs.writeFileSync(path.join(home, '.claude-secretary.json'), '{broken');
   assert.equal(hook(send).permissionDecision, 'deny', 'unreadable config fails closed');
   assert.equal(hook({ tool_name: 'mcp__github__create_issue', tool_input: {} }), null);
+});
+
+test('dashboard: briefing lead paragraph skips headings and lists', () => {
+  assert.equal(leadParagraph('# Briefing\n\n## Today\n- a\n- b\n\nTwo things need you:\nreply to [[Marcus Lee|Marcus]] **now**.\n\nMore.'), 'Two things need you: reply to Marcus now.');
+  assert.equal(leadParagraph('## Only headings\n- list'), null);
+});
+
+test('dashboard server: read-only API, localhost only, no path escapes', async () => {
+  const { home, run } = sandbox();
+  assert.equal(run('init', '--non-interactive', '--vault', path.join(home, 'V'), '--set', `timezone=${NY}`, '--set', `calendar_file=${path.join(home, 'cal.ics')}`).code, 0);
+  run('note', 'new', '--type', 'draft', '--title', 'Re lease', '--field', 'status=draft', '--field', 'subject=Re: lease');
+  run('note', 'new', '--type', 'draft', '--title', 'Old one', '--field', 'status=sent');
+  run('note', 'new', '--type', 'briefing', '--title', 'Briefing 2026-11-10', '--body', '## Today\n\nYour afternoon is open.');
+  run('log', '--action', 'send_email', '--target', 'mcp__x__send_email', '--summary', 'blocked by guard', '--status', 'blocked');
+  const ui = fs.mkdtempSync(path.join(os.tmpdir(), 'sec-ui-'));
+  fs.writeFileSync(path.join(ui, 'index.html'), 'home'); fs.writeFileSync(path.join(ui, 'inbox.html'), 'inbox'); fs.writeFileSync(path.join(ui, '404.html'), 'missing');
+  fs.writeFileSync(path.join(home, 'secret.txt'), 'nope');
+  const getConfig = () => { const prev = process.env.HOME; process.env.HOME = home; try { return loadConfig(); } finally { process.env.HOME = prev; } };
+  const server = createServer({ uiDir: ui, getConfig });
+  const port = await listen(server, 0);
+  const get = (p, headers = {}) => fetch(`http://127.0.0.1:${port}${p}`, { headers });
+  try {
+    assert.equal(await (await get('/')).text(), 'home');
+    assert.equal(await (await get('/inbox')).text(), 'inbox');
+    const miss = await get('/nope'); assert.equal(miss.status, 404); assert.equal(await miss.text(), 'missing');
+    assert.equal(resolveStatic(ui, '/%2e%2e/secret.txt'), null);
+    assert.equal(resolveStatic(ui, '/../secret.txt'), null);
+    const rebind = await new Promise((resolve, reject) => http.get({ host: '127.0.0.1', port, path: '/api/home', headers: { host: 'evil.example' } }, (r) => { r.resume(); resolve(r.statusCode); }).on('error', reject));
+    assert.equal(rebind, 403);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/api/home`, { method: 'POST' })).status, 405);
+    assert.equal((await get('/api/home?date=x')).status, 400);
+    const res = await get('/api/home?date=2026-11-10');
+    assert.equal(res.headers.get('x-frame-options'), 'DENY');
+    const d = await res.json();
+    assert.equal(d.date, '2026-11-10');
+    assert.deepEqual(d.drafts.map((x) => x.subject), ['Re: lease']);
+    assert.equal(d.briefing.summary, 'Your afternoon is open.');
+    assert.equal(d.permissions.send_email, 'off');
+    assert.ok(Array.isArray(d.events));
+    assert.ok(isLocalHost('localhost:7410') && isLocalHost('127.0.0.1') && !isLocalHost('localhost.evil.com'));
+  } finally { server.close(); }
 });
 
 test('plugin manifests are consistent', () => {
