@@ -1,0 +1,103 @@
+.day { --gutter: 64px; padding: 32px 40px 48px 56px; min-width: 0; }
+
+.head {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px; row-gap: 4px;
+  padding-bottom: 14px; border-bottom: 2px solid var(--margin);
+}
+.head h1 { font: 600 34px/1.1 var(--serif); letter-spacing: -0.01em; }
+.meta { grid-column: 1 / -1; color: var(--ink-2); font-size: 13px; }
+.step {
+  grid-row: 1; grid-column: 2;
+  display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+}
+.step button {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; height: 30px; padding: 0 10px;
+  border: 0; background: transparent; color: var(--ink-2);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.step button + button { border-left: 1px solid var(--line); }
+.step button:hover:not(:disabled) { background: var(--page-2); color: var(--ink); }
+.step button:disabled { color: var(--ink-3); cursor: default; }
+.step button:focus-visible { outline-offset: -2px; }
+
+.notice { margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+ul.notice li + li { margin-top: 2px; }
+
+.allDay { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.allDay li {
+  display: inline-flex; gap: 8px; align-items: baseline;
+  padding: 4px 10px; border-radius: 4px; background: var(--page-2); border: 1px solid var(--line);
+  font-weight: 600; font-size: 13.5px;
+}
+.allDay span { font-weight: 500; font-size: 12px; color: var(--hour); }
+
+.hours { position: relative; margin-top: 4px; }
+.hr {
+  display: grid; grid-template-columns: var(--gutter) 1fr;
+  height: var(--hour-h); border-bottom: 1px solid var(--rule-soft);
+}
+.hr span { font-size: 12px; font-weight: 600; color: var(--hour); padding-top: 6px; }
+.hr[data-past] span { color: var(--ink-3); }
+
+.events { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.events > * { pointer-events: auto; }
+.ev {
+  position: absolute; overflow: hidden;
+  padding: 6px 12px; border-radius: 4px;
+  background: var(--page-2); border: 1px solid var(--line);
+  transition: background-color 200ms ease-out;
+}
+.ev b { display: block; font-weight: 600; font-size: 14px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev small { display: block; color: var(--ink-2); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev[data-short] { padding-top: 3px; padding-bottom: 3px; display: flex; gap: 8px; align-items: baseline; }
+.ev[data-short] b { flex: 0 1 auto; }
+.ev[data-short] small { flex: 1 1 0; }
+.ev[data-past] { background: var(--page); border-color: var(--rule-soft); }
+.ev[data-past] b { color: var(--ink-2); }
+.ev[data-past] small { color: var(--ink-3); }
+.ev[data-free-time] { background: transparent; border-style: dashed; }
+.ev[data-cancelled] b { text-decoration: line-through; color: var(--ink-3); }
+
+.free {
+  position: absolute; left: var(--gutter); right: 4px;
+  padding: 6px 12px; border-radius: 4px;
+  border: 1px dashed var(--rule); color: var(--ink-2);
+  pointer-events: none;
+}
+.free b { display: block; font-weight: 600; font-size: 13.5px; }
+.free small { font-size: 12.5px; }
+
+.empty { position: absolute; left: var(--gutter); top: calc(1.5 * var(--hour-h)); color: var(--ink-2); }
+
+/* The ribbon: a red rule across the page at the current time, with a bookmark tail in the margin. */
+.ribbon { position: absolute; left: -56px; right: 0; height: 0; border-top: 2px solid var(--margin); z-index: 3; pointer-events: none; }
+.ribbon::before {
+  content: ''; position: absolute; left: 14px; top: -2px; width: 14px; height: 34px;
+  background: var(--margin);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+}
+.ribbon i {
+  position: absolute; right: 0; top: -20px;
+  padding: 1px 6px; border-radius: 3px; background: var(--page);
+  font: 700 11px/16px var(--sans); font-style: normal; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--margin);
+}
+
+@media (max-width: 1023px) {
+  .day { padding: 24px 24px 32px 48px; }
+  .ribbon { left: -48px; }
+  .ribbon::before { left: 10px; }
+}
+@media (max-width: 560px) {
+  .day { --gutter: 52px; padding: 20px 16px 28px 16px; }
+  .head h1 { font-size: 26px; }
+  .ribbon { left: -16px; }
+  .ribbon::before { display: none; }
+  .ev { padding: 4px 8px; }
+  .ev b, .ev small { white-space: normal; }
+  .ev .loc { display: none; }
+  .ev[data-short] { display: block; }
+  .ev[data-short] small { display: none; }
+}

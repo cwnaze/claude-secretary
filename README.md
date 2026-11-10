@@ -127,13 +127,29 @@ zero-dependency Node CLI (`sec help`) for notes and views (`followups due`,
 handles ICS: RRULE, EXDATE, RECURRENCE-ID, TZID/DST, free-slot search, editing
 and publishing.
 
+## Dashboard
+
+`sec ui` serves a read-only dashboard at `http://localhost:7410/` (`--port` to change it,
+`--open` to open your browser). The home page is today's briefing: your day ruled by the hour
+with the current time marked, drafts held for your OK, blocked send attempts, follow-ups due,
+people to reach this week, and this month's spend. Rows open the note in Obsidian. The other
+sections aren't built yet.
+
+The server only listens on 127.0.0.1, refuses requests for any other host name, and never writes
+to the vault. It follows your system's light or dark setting.
+
 ## Development
 
 ```bash
 npm test
 claude plugin validate .
 claude --plugin-dir .        # try it without installing
+npm run build:ui             # build web/ (Next.js static export) into ui/, which ships
+npm run dev:ui               # Next dev server on :7411; proxies /api to a running `sec ui`
 ```
+
+Next and React are dev dependencies only. The built `ui/` is plain files served by `sec ui`
+with Node's `http` module, so the plugin still needs no `npm install`.
 
 ## License
 

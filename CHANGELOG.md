@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- Web dashboard (`sec ui`): read-only briefing page on localhost with today's hours, drafts held for your OK, blocked attempts, follow-ups due, people this week and month-to-date spend. Light and dark follow the system. Other sections are placeholders.
+- `lib/views.mjs` holds the read-only views shared by `sec` and the dashboard; `lib/dashboard.mjs` and `lib/server.mjs` are new.
+
 ## 1.0.0 — 2026-11-07
 First release.
 - Claude Code plugin `secretary` (marketplace `cwnaze`): skills setup, secretary, briefing, inbox, calendar, meetings, followups, contacts, expenses; `sec` helper on PATH via `bin/`.
