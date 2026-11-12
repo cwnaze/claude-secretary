@@ -300,6 +300,88 @@ test('dashboard server: read-only API, localhost only, no path escapes', async (
   } finally { server.close(); }
 });
 
+// A temp HOME with a fake `claude` on PATH that logs its arguments, for `claude-secretary uninstall`.
+function uninstallSandbox(...initArgs) {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'sec-uninstall-'));
+  const bin = path.join(home, 'bin'); fs.mkdirSync(bin);
+  const calls = path.join(home, 'calls.log');
+  fs.writeFileSync(path.join(bin, 'claude'), `#!/bin/sh\necho "$*" >> "${calls}"\necho 9.9.9\n`, { mode: 0o755 });
+  const env = { ...process.env, HOME: home, XDG_CACHE_HOME: path.join(home, '.cache'), SECRETARY_CONFIG: '', PATH: `${bin}${path.delimiter}${process.env.PATH}` };
+  const CLI = path.join(here, '..', 'cli', 'claude-secretary.mjs');
+  const cli = (...args) => spawnSync(process.execPath, [CLI, 'uninstall', ...args], { env, encoding: 'utf8', input: '' });
+  const sec = (...args) => spawnSync(process.execPath, [SEC, ...args], { env, encoding: 'utf8' });
+  sec('init', '--non-interactive', '--vault', path.join(home, 'V'), ...initArgs);
+  return { home, calls, cli, sec };
+}
+
+test('CLI uninstall: removes plugin and marketplace, purges only with consent, never the vault', () => {
+  const { home, calls, cli } = uninstallSandbox();
+  const pointer = path.join(home, '.claude-secretary.json');
+  const cache = path.join(home, '.cache', 'claude-secretary');
+  fs.mkdirSync(path.join(cache, 'backups'), { recursive: true });
+
+  let r = cli();
+  assert.equal(r.status, 0, r.stderr);
+  const log = fs.readFileSync(calls, 'utf8');
+  assert.match(log, /plugin uninstall secretary@cwnaze --scope user/);
+  assert.match(log, /plugin marketplace remove cwnaze --scope user/);
+  assert.ok(fs.existsSync(pointer) && fs.existsSync(cache), 'no purge without --purge');
+
+  fs.rmSync(calls);
+  r = cli('--keep-marketplace', '--scope', 'project');
+  assert.equal(r.status, 0);
+  assert.doesNotMatch(fs.readFileSync(calls, 'utf8'), /marketplace remove/);
+  assert.match(fs.readFileSync(calls, 'utf8'), /--scope project/);
+
+  fs.rmSync(calls);
+  r = cli('--purge');
+  assert.equal(r.status, 1, 'non-interactive --purge needs --yes');
+  assert.match(r.stderr, /--yes/);
+  assert.ok(!fs.existsSync(calls), 'refused before doing anything');
+  assert.ok(fs.existsSync(pointer));
+
+  r = cli('--purge', '--yes');
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!fs.existsSync(pointer) && !fs.existsSync(cache));
+  assert.ok(fs.existsSync(path.join(home, 'V', 'Secretary', 'Settings.md')), 'vault untouched');
+});
+
+test('CLI uninstall: --remove-vault deletes only the secretary folder, --remove-ics the calendar file', () => {
+  for (const mode of ['folders', 'tags']) {
+    const { home, cli, sec } = uninstallSandbox('--set', `organize_by=${mode}`);
+    const vault = path.join(home, 'V'); const ics = path.join(home, 'cal.ics');
+    sec('init', '--non-interactive', '--set', `calendar_file=${ics}`);
+    fs.writeFileSync(ics, 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n');
+    sec('note', 'new', '--type', 'expense', '--title', 'Coffee', '--field', 'date=2026-11-10', '--field', 'amount=4');
+    sec('note', 'new', '--type', 'person', '--title', 'Ana');
+    fs.writeFileSync(path.join(vault, 'My note.md'), 'mine');
+
+    let r = cli('--remove-vault');
+    assert.equal(r.status, 1, 'non-interactive delete needs --yes');
+    assert.ok(fs.existsSync(path.join(vault, 'Secretary', 'Settings.md')));
+
+    r = cli('--remove-ics', '--yes');
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(!fs.existsSync(ics));
+    assert.ok(fs.existsSync(path.join(vault, 'Secretary', 'Settings.md')), `${mode}: --remove-ics leaves the vault`);
+
+    r = cli('--remove-vault', '--purge', '--yes');
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(!fs.existsSync(path.join(vault, 'Secretary')), `${mode}: secretary folder removed recursively`);
+    assert.equal(fs.readFileSync(path.join(vault, 'My note.md'), 'utf8'), 'mine', 'notes outside the secretary folder survive');
+    assert.ok(!fs.existsSync(path.join(home, '.claude-secretary.json')));
+  }
+
+  const { home, cli } = uninstallSandbox();
+  fs.writeFileSync(path.join(home, '.claude-secretary.json'), JSON.stringify({ vault: path.join(home, 'V'), root: '.' }));
+  const r = cli('--remove-vault', '--yes');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /Refusing/);
+  assert.ok(fs.existsSync(path.join(home, 'V')), 'never deletes the vault itself');
+  assert.equal(cli('--remove-vault', '--purge', '--yes').status, 1);
+  assert.equal(uninstallSandbox().cli('--remove-ics', '--yes').status, 0, 'no calendar_file: nothing to delete');
+});
+
 test('plugin manifests are consistent', () => {
   const root = path.join(here, '..');
   const plugin = JSON.parse(fs.readFileSync(path.join(root, '.claude-plugin', 'plugin.json'), 'utf8'));
