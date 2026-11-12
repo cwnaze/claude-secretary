@@ -31,6 +31,26 @@ Or from inside Claude Code:
 Requires Claude Code, Node 18+ and an Obsidian vault (any version; the vault is
 just a folder). In a session that was already running, run `/reload-plugins`.
 
+### Uninstall
+
+```bash
+npx claude-secretary uninstall                 # plugin + the cwnaze marketplace
+npx claude-secretary uninstall --purge         # also ~/.claude-secretary.json and the cache
+npx claude-secretary uninstall --remove-vault  # also <vault>/Secretary and every note in it
+npx claude-secretary uninstall --remove-ics    # also the local calendar file (calendar_file)
+```
+
+By default your vault and calendar file are left alone. The flags combine.
+`--remove-vault` deletes only the secretary's folder (`Secretary/` and everything
+under it, in either organisation mode). The rest of the vault is never touched.
+`--remove-ics` deletes the local master `.ics` file but not the published copy
+(e.g. on R2). If another tool writes to the same file, it loses it too. The cache
+holds feed copies and calendar backups. Any deleting flag lists what it will
+remove and asks first (pass `--yes` in scripts). Add `--keep-marketplace` to
+leave the marketplace registered, or `--scope` if you installed at project or
+local scope. From inside Claude Code: `/plugin uninstall secretary@cwnaze`, then
+`/plugin marketplace remove cwnaze`.
+
 ## Skills
 
 | Command | What it does |
