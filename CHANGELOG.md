@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Automatic briefings (#16): a morning brief (what to do today) and an evening recap (done today, left over, tomorrow) on a schedule. New settings `briefing_morning`, `briefing_evening`, `briefing_days`, `briefing_allowed_tools`; `sec schedule [show|install|remove]` manages launchd agents (macOS) or crontab lines (Linux) that run `claude -p "/secretary:briefing <kind> scheduled"`. Scheduled runs skip a day that already has its brief. `uninstall` removes the jobs.
+- `sec briefing-data --recap` adds the day's log, completed follow-ups and new notes; `--date` accepts `tomorrow`/`+1d`.
 - `npx claude-secretary uninstall` now also removes the `cwnaze` marketplace (`--keep-marketplace` to skip). Opt-in deletes, each listed and confirmed first (`--yes` to skip the prompt): `--purge` (`~/.claude-secretary.json` and the cache), `--remove-vault` (the `Secretary/` folder in the vault, recursively) and `--remove-ics` (the local calendar file).
 - Web dashboard (`sec ui`): read-only briefing page on localhost with today's hours, drafts held for your OK, blocked attempts, follow-ups due, people this week and month-to-date spend. Light and dark follow the system. Other sections are placeholders.
 - `lib/views.mjs` holds the read-only views shared by `sec` and the dashboard; `lib/dashboard.mjs` and `lib/server.mjs` are new.

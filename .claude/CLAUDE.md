@@ -44,7 +44,8 @@ skills/secretary/scripts/lib/
   calendar.mjs  remote-ics backend: read/write master file, backups, feed fetch+cache, publish, pull
   wizard.mjs    interactive (readline) or --set driven setup; discovers vaults from Obsidian's obsidian.json
   guard.mjs     pure classify(toolName, toolInput) → gated action, decide(action, level) → hook decision
-  views.mjs     read-only views (followupsDue, peopleDue, invoicesDue, expenseSummary, fmtEvents) for sec + dashboard
+  views.mjs     read-only views (followupsDue, peopleDue, invoicesDue, expenseSummary, fmtEvents, logRows, dayRecap) for sec + dashboard
+  schedule.mjs  automatic briefings: launchd plists / crontab lines running `claude -p "/secretary:briefing <kind> scheduled"`
   dashboard.mjs homeData() for GET /api/home: events, briefing lead, drafts, blocked log rows, follow-ups, spend
   server.mjs    `sec ui`: 127.0.0.1-only http server, Host check, GET/HEAD only, serves ui/ + /api/*
 web/                             Next.js (app router, TS) source of the dashboard; static export, dev deps only
@@ -95,6 +96,8 @@ test/sec.test.mjs                all tests (unit + CLI end-to-end in temp HOMEs)
    `--force`. Always `backup()` before `writeMain()`. `writeMain` writes tmp + rename.
 5. **Never move, rename or delete vault notes** from code or skills. Edit in place, so the user's
    wikilinks keep working.
+   The one exception is `claude-secretary uninstall --remove-vault`. It deletes only `<vault>/<root>`
+   (never the vault itself), only when the user explicitly asks, and only after confirmation.
 6. **The guard fails safe without blocking unrelated work**: no config → silent; classified +
    unreadable config → deny; unclassified → silent. Never let it throw (top-level catch). Draft,
    read and search tools must never be classified as gated.

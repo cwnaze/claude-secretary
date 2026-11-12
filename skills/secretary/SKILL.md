@@ -35,7 +35,7 @@ the user's explicit confirmation (or `--force` after confirming a risky edit).
 
 | User wants | Skill |
 |---|---|
-| "What's on today?", morning/weekly brief | `/secretary:briefing` |
+| "What's on today?", morning/evening/weekly brief, automatic briefs | `/secretary:briefing` |
 | Go through email, draft replies, screen requests | `/secretary:inbox` |
 | Find a time, book/move/cancel events, conflicts | `/secretary:calendar` |
 | Prep for a meeting, take minutes, action items | `/secretary:meetings` |

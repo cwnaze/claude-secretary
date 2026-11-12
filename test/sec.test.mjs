@@ -12,7 +12,8 @@ import { parseFrontmatter, setNoteFields, readNoteText } from '../skills/secreta
 import { classify, decide } from '../skills/secretary/scripts/lib/guard.mjs';
 import { createServer, listen, isLocalHost, resolveStatic } from '../skills/secretary/scripts/lib/server.mjs';
 import { leadParagraph } from '../skills/secretary/scripts/lib/dashboard.mjs';
-import { loadConfig } from '../skills/secretary/scripts/lib/config.mjs';
+import { loadConfig, defaultSettings } from '../skills/secretary/scripts/lib/config.mjs';
+import { briefingJobs, claudeArgs, cronLine, plist } from '../skills/secretary/scripts/lib/schedule.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SEC = path.join(here, '..', 'skills', 'secretary', 'scripts', 'sec.mjs');
@@ -299,6 +300,61 @@ test('dashboard server: read-only API, localhost only, no path escapes', async (
     assert.ok(isLocalHost('localhost:7410') && isLocalHost('127.0.0.1') && !isLocalHost('localhost.evil.com'));
   } finally { server.close(); }
 });
+
+test('schedule: jobs, claude args and job files come from settings', () => {
+  const st = { ...defaultSettings(), briefing_evening: '', briefing_days: ['Mon', 'sun', 'mon'] };
+  const jobs = briefingJobs(st);
+  assert.deepEqual(jobs, [{ kind: 'morning', time: '07:30', hour: 7, minute: 30, weekdays: [0, 1] }]);
+  assert.equal(briefingJobs({ ...st, briefing_days: [] }).length, 0);
+  assert.deepEqual(claudeArgs('evening', st), ['-p', '/secretary:briefing evening scheduled', '--permission-mode', 'dontAsk', '--allowedTools', 'Bash(sec *)']);
+  assert.throws(() => claudeArgs('morning', { ...st, briefing_allowed_tools: ["x'; rm -rf ~; '"] }), /aren't allowed/);
+  const ctx = { claude: '/usr/local/bin/claude', cwd: '/v/Secretary', settings: st };
+  const line = cronLine(jobs[0], ctx);
+  assert.match(line, /^30 7 \* \* 0,1 cd '\/v\/Secretary' && /);
+  assert.match(line, /'-p' '\/secretary:briefing morning scheduled'/);
+  assert.match(line, /# claude-secretary briefing morning$/);
+  assert.throws(() => cronLine(jobs[0], { ...ctx, cwd: "/v/it's" }), /crontab/);
+  const xmlText = plist(jobs[0], { ...ctx, cwd: '/v/A&B' });
+  assert.match(xmlText, /<string>com\.cwnaze\.claude-secretary\.briefing\.morning<\/string>/);
+  assert.match(xmlText, /<string>\/v\/A&amp;B<\/string>/);
+  assert.equal((xmlText.match(/<key>Weekday<\/key>/g) || []).length, 2);
+});
+
+test('CLI: briefing settings, schedule dry run and evening recap', () => {
+  const { home, run } = sandbox();
+  assert.equal(run('init', '--non-interactive', '--vault', path.join(home, 'V'), '--set', `timezone=${NY}`, '--set', 'briefing_evening=off').code, 0);
+  assert.equal(loadConfigIn(home).settings.briefing_evening, '');
+  let r = run('init', '--non-interactive', '--set', 'briefing_morning=7am');
+  assert.equal(r.code, 1); assert.match(r.err, /briefing_morning must be HH:MM/);
+  r = run('init', '--non-interactive', '--set', 'briefing_days=mon,funday');
+  assert.equal(r.code, 1); assert.match(r.err, /funday/);
+  assert.equal(run('init', '--non-interactive', '--set', "briefing_allowed_tools=Bash(sec *),mcp__x'y").code, 1);
+
+  const show = run('schedule').json;
+  assert.deepEqual(show.wanted.map((j) => j.kind), ['morning']);
+  const env = (sched) => spawnSync(process.execPath, [SEC, 'schedule', 'install', '--dry-run', '--claude', '/usr/local/bin/claude'], { env: { ...process.env, HOME: home, XDG_CACHE_HOME: path.join(home, '.cache'), SECRETARY_CONFIG: '', SECRETARY_SCHEDULER: sched }, encoding: 'utf8' });
+  const cron = JSON.parse(env('cron').stdout);
+  assert.equal(cron.dry_run, true); assert.equal(cron.lines.length, 1);
+  const ld = JSON.parse(env('launchd').stdout);
+  assert.ok(ld.files[0].file.startsWith(path.join(home, 'Library', 'LaunchAgents')));
+  assert.equal(env('none').status, 1, 'unsupported platforms refuse');
+  assert.ok(!fs.existsSync(path.join(home, 'Library')), 'dry run writes nothing');
+
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: NY }).format(new Date());
+  run('note', 'new', '--type', 'followup', '--title', 'Ship it', '--field', 'status=done', '--field', `completed=${today}`);
+  run('note', 'new', '--type', 'followup', '--title', 'Old', '--field', 'status=done', '--field', 'completed=2020-01-01');
+  run('note', 'new', '--type', 'briefing', '--title', `Briefing ${today}`, '--field', `date=${today}`, '--field', 'kind=morning');
+  run('log', '--action', 'calendar_add', '--target', 'Lunch');
+  const recap = run('briefing-data', '--recap').json.recap;
+  assert.deepEqual(recap.completed.map((x) => x.title), ['Ship it']);
+  assert.deepEqual(recap.created.map((x) => x.title).sort(), ['Old', 'Ship it'], 'briefings are not listed as new work');
+  assert.ok(recap.log.some((x) => x.action === 'calendar_add'));
+  assert.equal(run('briefing-data').json.recap, undefined);
+  assert.equal(run('briefing-data', '--date', 'tomorrow').json.date > today, true);
+  assert.equal(run('find', '--type', 'briefing', '--where', `date=${today}`, '--where', 'kind=morning').json.length, 1);
+});
+
+function loadConfigIn(home) { const prev = process.env.HOME; process.env.HOME = home; try { return loadConfig(); } finally { process.env.HOME = prev; } }
 
 // A temp HOME with a fake `claude` on PATH that logs its arguments, for `claude-secretary uninstall`.
 function uninstallSandbox(...initArgs) {

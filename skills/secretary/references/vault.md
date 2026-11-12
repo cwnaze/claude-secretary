@@ -99,5 +99,5 @@ status: draft | sent | open | paid | overdue | void
 
 **budget** — one note; properties `limit_<category>: <monthly amount>`.
 
-**briefing** (title = `Briefing YYYY-MM-DD`), **triage** (title = `Triage YYYY-MM-DDTHHMM`),
+**briefing** (title = `Briefing YYYY-MM-DD`, evening recap `Briefing YYYY-MM-DD evening`; fields `date`, `kind: morning|evening|weekly`), **triage** (title = `Triage YYYY-MM-DDTHHMM`),
 **draft** (fields: `to`, `cc`, `subject`, `channel: email|slack|sms`, `status: draft|sent|discarded`, `in_reply_to`).

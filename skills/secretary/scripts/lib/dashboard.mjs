@@ -7,7 +7,7 @@ import { readNoteText } from './yaml.mjs';
 import { ACTIONS, permission } from './config.mjs';
 import { collectEvents } from './calendar.mjs';
 import { parseWhen, todayIn, addDays, formatLocal } from './tz.mjs';
-import { fmtEvents, followupsDue, peopleDue, invoicesDue, expenseSummary } from './views.mjs';
+import { fmtEvents, followupsDue, peopleDue, invoicesDue, expenseSummary, logRows } from './views.mjs';
 
 // First prose paragraph of a note body: skips headings, callouts, lists and embeds.
 export function leadParagraph(body) {
@@ -29,21 +29,6 @@ function latestBriefing(cfg, date) {
   let summary = null;
   try { summary = leadParagraph(readNoteText(fs.readFileSync(path.join(cfg.vault, n.path), 'utf8')).body); } catch { /* unreadable note */ }
   return { title: n.title, date: n.title.slice(9, 19), created: n.created ? String(n.created) : null, path: n.path, summary };
-}
-
-// Rows of Log.md whose timestamp starts with `date`.
-export function logRows(cfg, date) {
-  let text;
-  try { text = fs.readFileSync(path.join(cfg.rootDir, 'Log.md'), 'utf8'); } catch { return []; }
-  const rows = [];
-  for (const line of text.split('\n')) {
-    if (!line.startsWith(`| ${date}`)) continue;
-    const cells = line.slice(1, -1).split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
-    if (cells.length < 5) continue;
-    const [when, action, target, summary, status] = cells;
-    rows.push({ when, action, target, summary, status });
-  }
-  return rows;
 }
 
 const s = (v) => (v === null || v === undefined ? undefined : String(v));
