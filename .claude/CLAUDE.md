@@ -153,9 +153,11 @@ contact_people. That is the product's core promise. Update README, safety.md, se
 
 1. Bump `version` in **both** `package.json` and `.claude-plugin/plugin.json`; add a CHANGELOG entry.
 2. `npm test && claude plugin validate . && npm pack --dry-run`
-3. Commit, tag `vX.Y.Z`, push. Plugin users update with `/plugin marketplace update cwnaze`,
-   then `/plugin update secretary@cwnaze` (or `claude plugin update ...`).
-4. `npm publish` for the npx installer.
+3. Open a PR and merge it to `main`. `.github/workflows/release.yml` runs the tests and, if
+   that version isn't on npm yet, runs `npm publish --provenance` (trusted publishing, no
+   token) and creates the `vX.Y.Z` tag and GitHub release. Merges without a bump only test.
+4. Plugin users update with `/plugin marketplace update cwnaze`, then
+   `/plugin update secretary@cwnaze` (or `claude plugin update ...`).
 
 ## Testing locally end to end
 
