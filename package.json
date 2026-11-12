@@ -20,7 +20,7 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "build:ui": "node scripts/build-ui.mjs",
-    "dev:ui": "next dev web --port 7411"
+    "dev:ui": "node scripts/dev-ui.mjs"
   },
   "engines": {
     "node": ">=18.17"

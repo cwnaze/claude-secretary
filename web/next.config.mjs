@@ -9,5 +9,6 @@ export default {
   trailingSlash: false,
   images: { unoptimized: true },
   poweredByHeader: false,
+  agentRules: false,
   ...(dev ? { rewrites: async () => [{ source: '/api/:path*', destination: `${api}/api/:path*` }] } : {}),
 };

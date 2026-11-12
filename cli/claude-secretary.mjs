@@ -28,6 +28,7 @@ Commands
   install     Install or update the plugin only
   config      Run the setup wizard (vault, profile, calendar, permissions)
   check       Health check of vault, settings and calendar
+  ui          Open the read-only web dashboard on http://localhost:7410/ (no Claude Code needed)
   uninstall   Uninstall the plugin and remove its marketplace (vault kept unless --remove-vault)
 
 Options
@@ -42,6 +43,7 @@ Options
   --remove-ics                 uninstall: also delete the local calendar file (calendar_file);
                                the published copy is not touched; asks first
   -y, --yes                    uninstall: don't ask before deleting
+  --port <n>                   ui: port for the dashboard (default: 7410)
 
 Inside Claude Code you can do the same with:
   /plugin marketplace add ${DEFAULT_SOURCE}
@@ -57,7 +59,7 @@ function parse(argv) {
     else if (a.startsWith('--')) {
       const [k, v] = a.slice(2).split(/=(.*)/s);
       if (v !== undefined) flags[k] = v;
-      else if (['scope', 'source'].includes(k)) flags[k] = argv[++i];
+      else if (['scope', 'source', 'port'].includes(k)) flags[k] = argv[++i];
       else flags[k] = true;
     } else pos.push(a);
   }
@@ -193,6 +195,7 @@ Then in Claude Code: "secretary check", or /${PLUGIN}:briefing to get your first
     case 'install': process.exit(installPlugin(flags) ? 0 : 1);
     case 'config': process.exit(runSec(['init']));
     case 'check': process.exit(runSec(['check']));
+    case 'ui': process.exit(runSec(['ui', '--open', ...(flags.port ? [`--port=${flags.port}`] : [])]));
     case 'uninstall': process.exit(await uninstall(flags));
     default:
       console.error(`Unknown command "${cmd}".\n`); console.log(HELP); process.exit(1);

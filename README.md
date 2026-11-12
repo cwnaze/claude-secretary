@@ -150,7 +150,8 @@ and publishing.
 ## Dashboard
 
 `sec ui` serves a read-only dashboard at `http://localhost:7410/` (`--port` to change it,
-`--open` to open your browser). The home page is today's briefing: your day ruled by the hour
+`--open` to open your browser). Outside Claude Code, run `npx claude-secretary ui`; it reads the
+same vault and doesn't need Claude Code running. The home page is today's briefing: your day ruled by the hour
 with the current time marked, drafts held for your OK, blocked send attempts, follow-ups due,
 people to reach this week, and this month's spend. Rows open the note in Obsidian. The other
 sections aren't built yet.
@@ -165,7 +166,7 @@ npm test
 claude plugin validate .
 claude --plugin-dir .        # try it without installing
 npm run build:ui             # build web/ (Next.js static export) into ui/, which ships
-npm run dev:ui               # Next dev server on :7411; proxies /api to a running `sec ui`
+npm run dev:ui               # Next dev server on :7411 plus the vault API on :7410
 ```
 
 Next and React are dev dependencies only. The built `ui/` is plain files served by `sec ui`
