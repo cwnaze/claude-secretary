@@ -12,12 +12,15 @@
     "cli/",
     "hooks/",
     "skills/",
+    "ui/",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "build:ui": "node scripts/build-ui.mjs",
+    "dev:ui": "next dev web --port 7411"
   },
   "engines": {
     "node": ">=18.17"
@@ -42,5 +45,14 @@
     "type": "git",
     "url": "git+https://github.com/cwnaze/claude-secretary.git"
   },
-  "homepage": "https://github.com/cwnaze/claude-secretary#readme"
+  "homepage": "https://github.com/cwnaze/claude-secretary#readme",
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2"
+  }
 }

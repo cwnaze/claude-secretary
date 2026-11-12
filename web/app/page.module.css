@@ -1,0 +1,21 @@
+.main {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  max-width: 1600px; margin: 0 auto; position: relative;
+}
+/* The diary's spine: one rule down the middle of the spread. */
+.main::before {
+  content: ''; position: absolute; left: 50%; top: 32px; bottom: 32px; width: 1px; background: var(--line);
+}
+
+.loading {
+  grid-column: 1 / -1; height: calc(100dvh - 56px);
+  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--hour-h) - 1px), var(--rule-soft) calc(var(--hour-h) - 1px) var(--hour-h));
+  background-position: 0 96px; background-repeat: no-repeat;
+  animation: settle 1.2s ease-out infinite alternate;
+}
+@keyframes settle { from { opacity: 0.4; } to { opacity: 1; } }
+
+@media (max-width: 1023px) {
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .main::before { display: none; }
+}

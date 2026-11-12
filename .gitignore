@@ -1,0 +1,10 @@
+node_modules/
+*.tgz
+.DS_Store
+CLAUDE.local.md
+web/.next/
+web/out/
+web/next-env.d.ts
+web/tsconfig.tsbuildinfo
+# copies made by iCloud Desktop sync
+* [0-9].*

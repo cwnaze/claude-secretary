@@ -1,0 +1,22 @@
+{
+  "name": "secretary",
+  "displayName": "Secretary",
+  "version": "1.0.0",
+  "description": "Your secretary in Claude Code: briefings, inbox triage, calendar (self-hosted ICS on Cloudflare R2, or connectors), meetings, follow-ups, contacts and expenses, stored in your Obsidian vault. Outbound actions are off by default and enforced by a hook.",
+  "author": {
+    "name": "Casey Nazelrod",
+    "url": "https://github.com/cwnaze"
+  },
+  "homepage": "https://github.com/cwnaze/claude-secretary",
+  "repository": "https://github.com/cwnaze/claude-secretary",
+  "license": "MIT",
+  "keywords": [
+    "secretary",
+    "assistant",
+    "obsidian",
+    "calendar",
+    "ics",
+    "email",
+    "productivity"
+  ]
+}
