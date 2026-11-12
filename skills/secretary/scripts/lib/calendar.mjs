@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { parseCalendar, occurrences, emptyCalendar } from './ics.mjs';
 import { expandHome } from './config.mjs';
+import { readAppleEvents } from './apple.mjs';
 
 export function cacheDir() {
   const base = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
@@ -78,13 +79,20 @@ export function redact(u) {
   catch { return '(feed)'; }
 }
 
-export async function collectEvents(settings, fromMs, toMs, { feeds = true, main = true } = {}) {
+export function appleEnabled(settings) { return String(settings.calendar_apple || 'off').toLowerCase() === 'macos'; }
+
+export async function collectEvents(settings, fromMs, toMs, { feeds = true, main = true, apple = true } = {}) {
   const tz = settings.timezone;
   const all = []; const warnings = [];
   if (main && settings.calendar_backend === 'remote-ics' && settings.calendar_file) {
-    const { text } = readMain(settings);
-    const r = occurrences(parseCalendar(text), fromMs, toMs, tz, { source: 'main' });
-    all.push(...r.events); warnings.push(...r.warnings);
+    const otherSources = (feeds && (settings.calendar_feeds || []).length) || (apple && appleEnabled(settings));
+    if (otherSources && !fs.existsSync(calendarFile(settings))) {
+      warnings.push(`Calendar file not found: ${calendarFile(settings)} (showing the other calendars only)`);
+    } else {
+      const { text } = readMain(settings);
+      const r = occurrences(parseCalendar(text), fromMs, toMs, tz, { source: 'main' });
+      all.push(...r.events); warnings.push(...r.warnings);
+    }
   }
   if (feeds) {
     for (const url of settings.calendar_feeds || []) {
@@ -95,6 +103,16 @@ export async function collectEvents(settings, fromMs, toMs, { feeds = true, main
         all.push(...r.events); warnings.push(...r.warnings);
       } catch (e) { warnings.push(e.message); }
     }
+  }
+  if (apple && appleEnabled(settings)) {
+    try {
+      // Calendar.app often subscribes to the same files (our published .ics, a
+      // Canvas feed), so drop occurrences we already have from another source.
+      const seen = new Set(all.map((e) => `${e.uid}|${e.start}`));
+      for (const e of readAppleEvents(fromMs, toMs, { calendars: settings.calendar_apple_names || [] })) {
+        if (!seen.has(`${e.uid}|${e.start}`)) all.push(e);
+      }
+    } catch (e) { warnings.push(`Apple Calendar: ${e.message}`); }
   }
   all.sort((a, b) => a.start - b.start);
   return { events: all, warnings };

@@ -35,7 +35,9 @@ Set any key non-interactively with `sec init --non-interactive --set key=value`
 | `calendar_public_url` | — | URL clients subscribe to; used by `sec ics pull` |
 | `calendar_bucket` / `calendar_key` | — | Filled into `{bucket}` / `{key}` |
 | `calendar_publish_command` | wrangler R2 put | Upload command; `{file}`, `{bucket}`, `{key}` placeholders |
-| `calendar_feeds` | [] | Extra read-only ICS URLs counted as busy |
+| `calendar_feeds` | [] | Extra read-only ICS URLs counted as busy (any OS; includes iCloud public calendar `webcal://` links) |
+| `calendar_apple` | off | `macos` = also read Apple Calendar (Calendar.app) directly via EventKit. macOS only; other systems skip it with a warning, so a synced Settings.md is safe on a PC |
+| `calendar_apple_names` | [] | Calendar titles to read with `calendar_apple` (case-insensitive); empty = all |
 | `all_day_is_busy` | false | Whether all-day events block scheduling |
 
 Default publish command:

@@ -12,6 +12,8 @@ import { parseFrontmatter, setNoteFields, readNoteText } from '../skills/secreta
 import { classify, decide } from '../skills/secretary/scripts/lib/guard.mjs';
 import { createServer, listen, isLocalHost, resolveStatic } from '../skills/secretary/scripts/lib/server.mjs';
 import { leadParagraph } from '../skills/secretary/scripts/lib/dashboard.mjs';
+import { loadConfig } from '../skills/secretary/scripts/lib/config.mjs';
+import { mapAppleEvents, appleSupported } from '../skills/secretary/scripts/lib/apple.mjs';
 import { loadConfig, defaultSettings } from '../skills/secretary/scripts/lib/config.mjs';
 import { briefingJobs, claudeArgs, cronLine, plist } from '../skills/secretary/scripts/lib/schedule.mjs';
 
@@ -452,4 +454,51 @@ test('plugin manifests are consistent', () => {
   assert.ok(st.mode & 0o111, 'bin/sec must be executable');
   const r = spawnSync(path.join(root, 'bin', 'sec'), ['help'], { encoding: 'utf8' });
   assert.equal(r.status, 0);
+});
+
+test('CLI: vaults finds Obsidian vaults in iCloud Drive (macOS and Windows layouts)', () => {
+  const { home, run } = sandbox();
+  const mk = (...p) => fs.mkdirSync(path.join(home, ...p), { recursive: true });
+  mk('Library', 'Mobile Documents', 'iCloud~md~obsidian', 'Documents', 'Notes', '.obsidian');
+  mk('Library', 'Mobile Documents', 'com~apple~CloudDocs', 'School', 'Vault', '.obsidian');
+  mk('Library', 'Mobile Documents', 'com~apple~CloudDocs', 'Photos', 'NotAVault');
+  mk('iCloudDrive', 'iCloud~md~obsidian', 'WinVault', '.obsidian');
+  mk('iCloudDrive', 'Work', '.obsidian');
+  const r = run('vaults');
+  assert.equal(r.code, 0, r.err);
+  const paths = r.json.map((v) => path.relative(home, v.path)).sort();
+  assert.deepEqual(paths, [
+    path.join('Library', 'Mobile Documents', 'com~apple~CloudDocs', 'School', 'Vault'),
+    path.join('Library', 'Mobile Documents', 'iCloud~md~obsidian', 'Documents', 'Notes'),
+    path.join('iCloudDrive', 'Work'),
+    path.join('iCloudDrive', 'iCloud~md~obsidian', 'WinVault'),
+  ].sort());
+  assert.ok(r.json.every((v) => v.icloud));
+  const empty = sandbox().run('vaults');
+  assert.deepEqual(empty.json, [], 'no iCloud folders → nothing found, no error');
+});
+
+test('apple: EventKit rows map to the occurrences() event shape', () => {
+  assert.equal(appleSupported('linux'), false);
+  assert.equal(appleSupported('win32'), false);
+  assert.equal(appleSupported('darwin'), true);
+  const [busy, free, cancelled] = mapAppleEvents([
+    { uid: 'a', summary: 'Lecture', location: 'CAR 0100', calendar: 'Class Times', start: 1794509700, end: 1794512700, allDay: false, availability: 0, status: 1, recurring: true },
+    { uid: 'b', summary: 'Holiday', location: '', calendar: 'US Holidays', start: 1794460000, end: 1794546400, allDay: true, availability: 1, status: 0, recurring: false },
+    { uid: 'c', summary: 'Gone', location: '', calendar: '', start: 1794509700, end: 1794512700, allDay: false, availability: 0, status: 3, recurring: false },
+  ]);
+  assert.deepEqual(busy, { uid: 'a', summary: 'Lecture', location: 'CAR 0100', allDay: false, status: undefined, transparent: false, ours: false, source: 'apple:Class Times', recurring: true, start: 1794509700000, end: 1794512700000 });
+  assert.equal(free.transparent, true);
+  assert.equal(free.location, undefined);
+  assert.equal(cancelled.status, 'CANCELLED');
+  assert.equal(cancelled.source, 'apple:calendar');
+});
+
+test('CLI: calendar_apple setting is validated, names are a list', () => {
+  const { home, run } = sandbox();
+  assert.equal(run('init', '--non-interactive', '--vault', path.join(home, 'V'), '--set', 'calendar_apple=yes').code, 1);
+  assert.equal(run('init', '--non-interactive', '--vault', path.join(home, 'V'), '--set', 'calendar_apple=off', '--set', 'calendar_apple_names=Work, Class Times').code, 0);
+  const s = run('config').json.settings;
+  assert.equal(s.calendar_apple, 'off');
+  assert.deepEqual(s.calendar_apple_names, ['Work', 'Class Times']);
 });

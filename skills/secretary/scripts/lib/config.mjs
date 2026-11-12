@@ -38,6 +38,8 @@ export function defaultSettings() {
     calendar_public_url: '',
     calendar_publish_command: DEFAULT_PUBLISH_COMMAND,
     calendar_feeds: [],
+    calendar_apple: 'off',
+    calendar_apple_names: [],
     all_day_is_busy: false,
     email_backend: 'connector',
     messaging_backend: 'none',
@@ -146,7 +148,10 @@ Each outbound action is one of:
   \`calendar_publish_command\` to upload it (default: Cloudflare R2 via wrangler).
   Placeholders: \`{file}\`, \`{bucket}\`, \`{key}\`.
 - **calendar_backend: connector** — Claude uses a connected calendar tool (Google, Outlook).
-- **calendar_feeds** — extra read-only ICS URLs (e.g. Canvas) counted as busy time.
+- **calendar_feeds** — extra read-only ICS URLs (e.g. Canvas, iCloud public calendar
+  links) counted as busy time. Works on any computer.
+- **calendar_apple: macos** — also read Apple Calendar (Calendar.app) directly on a Mac,
+  limited to \`calendar_apple_names\` if set. Ignored with a warning on other computers.
 
 ## Automatic briefings
 \`briefing_morning\` (what to do today) and \`briefing_evening\` (recap and what's left)

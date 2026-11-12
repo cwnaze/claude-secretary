@@ -9,8 +9,9 @@ import { loadConfig, permission, ACTIONS, pointerPath } from './lib/config.mjs';
 import { createNote, setFields, appendToNote, findNotes, logAction, ensureLayout, TYPES } from './lib/vault.mjs';
 import { parseWhen, todayIn, addDays, daysBetween, formatLocal } from './lib/tz.mjs';
 import { parseCalendar, addEvent, rewriteEvent, patchEventLines, newUid, freeSlots } from './lib/ics.mjs';
-import { readMain, writeMain, backup, collectEvents, publish, pull, redact } from './lib/calendar.mjs';
-import { runWizard, discoverVaults } from './lib/wizard.mjs';
+import { readMain, writeMain, backup, collectEvents, appleEnabled, publish, pull, redact } from './lib/calendar.mjs';
+import { runWizard, discoverVaults, isICloudPath } from './lib/wizard.mjs';
+import { appleSupported, appleAccess, appleCalendars } from './lib/apple.mjs';
 import { createServer, listen, DEFAULT_PORT } from './lib/server.mjs';
 import { fmtEvents, followupsDue, peopleDue, invoicesDue, expenseSummary, dayRecap } from './lib/views.mjs';
 import { installSchedule, removeSchedule, installedJobs, briefingJobs, scheduler, findClaude } from './lib/schedule.mjs';
@@ -20,7 +21,9 @@ const HELP = `claude-secretary — helper for the secretary skills
 Setup
   init [--vault PATH] [--root Secretary] [--set key=value ...] [--non-interactive]
   config                         Print resolved settings (JSON)
-  check                          Health check: vault, settings, calendar, feeds, uploader
+  check                          Health check: vault, settings, calendar, feeds, Apple Calendar, uploader
+  vaults                         Obsidian vaults on this machine, including iCloud Drive
+  apple status|access|calendars  Apple Calendar on macOS: access state, ask for access, list calendars
   can <action>                   Permission level: off | ask | auto  (exit 0 allowed, 3 off)
                                  actions: ${ACTIONS.join(', ')}
 Vault notes
@@ -42,7 +45,7 @@ Automatic briefings (briefing_morning / briefing_evening / briefing_days in Sett
   schedule remove [--dry-run]     Remove them
 Dashboard
   ui [--port ${DEFAULT_PORT}] [--open]      Serve the read-only web dashboard on localhost
-Calendar (remote-ics backend; feeds are used by both backends)
+Calendar (remote-ics backend; feeds and Apple Calendar are read with both backends)
   ics list [--from today] [--to +7d] [--no-feeds]
   ics free --duration MIN [--from now] [--to +7d] [--buffer MIN] [--after-hours] [--busy-json FILE] [--limit N]
   ics show <uid>
@@ -155,7 +158,15 @@ async function main() {
     return;
   }
 
-  if (cmd === 'vaults') { out(discoverVaults()); return; }
+  if (cmd === 'vaults') { out(discoverVaults().map((v) => ({ path: v, icloud: isICloudPath(v) }))); return; }
+
+  if (cmd === 'apple') {
+    if (!appleSupported()) { out({ supported: false, platform: process.platform, note: 'Apple Calendar can only be read directly on macOS. Add iCloud calendars as public calendar links in calendar_feeds instead.' }); return; }
+    if (sub === 'status' || !sub) { out({ supported: true, access: appleAccess() }); return; }
+    if (sub === 'access') { out({ supported: true, access: appleAccess({ request: true }) }); return; }
+    if (sub === 'calendars') { out({ supported: true, access: 'granted', calendars: appleCalendars() }); return; }
+    throw new Error('Usage: apple status|access|calendars');
+  }
 
   if (cmd === 'ui') {
     const port = await listen(createServer(), Number(flags.port || process.env.SECRETARY_PORT || DEFAULT_PORT));
@@ -198,8 +209,16 @@ async function main() {
         }
       }
       for (const u of s.calendar_feeds || []) {
-        try { await collectEvents({ ...s, calendar_feeds: [u], calendar_backend: 'connector' }, Date.now(), Date.now() + 86400000); res.ok.push(`feed reachable: ${redact(u)}`); }
+        try { await collectEvents({ ...s, calendar_feeds: [u], calendar_backend: 'connector' }, Date.now(), Date.now() + 86400000, { apple: false }); res.ok.push(`feed reachable: ${redact(u)}`); }
         catch (e) { res.problems.push(`feed ${redact(u)}: ${e.message}`); }
+      }
+      if (appleEnabled(s)) {
+        try {
+          const cals = appleCalendars().map((c) => c.title);
+          const missing = (s.calendar_apple_names || []).filter((n) => !cals.some((c) => c.toLowerCase() === String(n).toLowerCase()));
+          res.ok.push(`Apple Calendar readable (${cals.length} calendars)`);
+          if (missing.length) res.problems.push(`calendar_apple_names not found in Calendar.app: ${missing.join(', ')}`);
+        } catch (e) { res.problems.push(`Apple Calendar: ${e.message}`); }
       }
       res.note = 'Email/calendar connectors cannot be seen from this script. Claude must check its own tool list for them.';
       out(res); return;
