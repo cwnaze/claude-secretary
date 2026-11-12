@@ -18,7 +18,8 @@ npx claude-secretary init
 ```
 
 This installs the plugin with the `claude` CLI and then runs the setup wizard:
-vault, organisation mode, profile, calendar, extra feeds and permissions.
+vault (Obsidian's vault list plus any vaults in iCloud Drive), organisation mode,
+profile, calendar, Apple Calendar, extra feeds and permissions.
 
 Or from inside Claude Code:
 
@@ -109,8 +110,15 @@ Two backends:
 - **connector** — Google Calendar, Outlook and similar, through Claude's
   connectors or MCP servers.
 
-With either backend you can add extra read-only feeds (Canvas, shared iCloud
-calendars…) that count as busy time.
+With either backend you can add extra read-only feeds (Canvas, iCloud public
+calendar links…) that count as busy time.
+
+**Apple Calendar.** On a Mac, setup can also read Calendar.app directly
+(`calendar_apple: macos`), including every account in it (iCloud, Google,
+Exchange, subscriptions), with recurring events expanded. macOS asks once for
+calendar access. On Windows or Linux, share an iCloud calendar as a Public
+Calendar and add its `webcal://` link as a feed. Apple Calendar is read-only
+either way.
 
 ## Vault layout
 

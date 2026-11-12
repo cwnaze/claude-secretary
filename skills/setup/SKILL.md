@@ -1,6 +1,6 @@
 ---
 name: setup
-description: First-time setup or reconfiguration of the Secretary plugin — Obsidian vault, organisation mode, profile, calendar backend and feeds, and outbound permissions. Use when the user runs /secretary:setup, asks to set up or reconfigure their secretary, or when `sec config` reports no secretary config.
+description: First-time setup or reconfiguration of the Secretary plugin — Obsidian vault (found locally or in iCloud Drive), organisation mode, profile, calendar backend, Apple Calendar and feeds, and outbound permissions. Use when the user runs /secretary:setup, asks to set up or reconfigure their secretary, or when `sec config` reports no secretary config.
 license: MIT
 allowed-tools: Bash(sec *)
 ---
@@ -19,8 +19,11 @@ If the user prefers a terminal wizard, they can instead run
 
 - `sec config` — if it succeeds, this is a reconfigure: use current values as
   defaults and only ask about what the user wants to change.
-- `sec vaults` — Obsidian vaults found on this machine (from Obsidian's own
-  vault list).
+- `sec vaults` — Obsidian vaults found on this machine: Obsidian's own vault
+  list plus vaults in iCloud Drive (macOS, and iCloud for Windows), each
+  marked `icloud: true|false`.
+- `sec apple status` — whether Apple Calendar can be read directly here
+  (`supported: false` on anything but macOS).
 
 ## 2. Ask
 
@@ -28,7 +31,7 @@ Use the AskUserQuestion tool where it fits (multiple choice), plain questions
 otherwise. Keep it to as few rounds as possible:
 
 1. **Vault** — which of the found vaults (or a path), and the folder for
-   secretary notes (default `Secretary`).
+   secretary notes (default `Secretary`). Say which ones are in iCloud.
 2. **Organise by** — `folders` (sub-folders per type) or `tags` (flat folder,
    grouped by `#secretary/<type>` tags). Switching later is safe.
 3. **About you** — name, timezone (default: system zone), working days and
@@ -38,10 +41,21 @@ otherwise. Keep it to as few rounds as possible:
    or `connector` (Google Calendar / Outlook through Claude's connectors).
    For remote-ics: local master file path, public subscription URL, R2 bucket
    and object key, and whether to use the default wrangler upload command.
-5. **Extra feeds** — read-only ICS URLs that count as busy (Canvas, shared
+5. **Apple Calendar** — ask whether they use it. Don't assume a Mac: go by
+   `sec apple status`.
+   - `supported: true` (macOS): offer `calendar_apple=macos` to read
+     Calendar.app directly (every account in it). Run `sec apple access`
+     (macOS may show a permission dialog; tell them to allow Full Access), then
+     `sec apple calendars` and ask which to include (`calendar_apple_names`,
+     blank = all).
+   - `supported: false`: they can share each iCloud calendar as a Public
+     Calendar on icloud.com/calendar (or the Calendar app on iPhone) and give
+     you the `webcal://` link, which goes in `calendar_feeds`. Mention that
+     anyone with that link can read the calendar.
+6. **Extra feeds** — read-only ICS URLs that count as busy (Canvas, shared
    calendars). Optional.
-6. **Email / messaging** — connector or none for each.
-7. **Permissions** — present the safe defaults and ask only if they want to
+7. **Email / messaging** — connector or none for each.
+8. **Permissions** — present the safe defaults and ask only if they want to
    change any: `send_email: off`, `send_invites: off`, `contact_people: off`,
    `manage_calendar: ask`. Explain off / ask / auto in one line each. Never
    suggest `auto` yourself.
@@ -55,7 +69,8 @@ sec init --non-interactive --vault "/path/to/vault" --root Secretary \
   --set hard_stop=21:30 --set "vips=Jane Doe, boss@example.com" \
   --set calendar_backend=remote-ics --set calendar_file="/path/to/calendar.ics" \
   --set calendar_public_url="https://..." --set calendar_bucket=my-bucket \
-  --set calendar_key=calendar.ics --set calendar_feeds="https://...,https://..."
+  --set calendar_key=calendar.ics --set calendar_feeds="https://...,https://..." \
+  --set calendar_apple=macos --set "calendar_apple_names=Work, Personal"
 ```
 
 Only pass `--set` for values the user gave; omitted keys keep their defaults or

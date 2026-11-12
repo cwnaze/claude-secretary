@@ -13,6 +13,7 @@ import {
 import { readNoteText } from './yaml.mjs';
 import { isValidTz } from './tz.mjs';
 import { ensureLayout } from './vault.mjs';
+import { appleSupported, appleAccess, appleCalendars } from './apple.mjs';
 
 export function obsidianConfigPaths() {
   const h = os.homedir();
@@ -26,14 +27,59 @@ export function obsidianConfigPaths() {
   ].filter(Boolean);
 }
 
+// iCloud Drive locations. Obsidian's own iCloud container holds one vault per
+// sub-folder; vaults kept elsewhere in iCloud Drive are found by their .obsidian folder.
+// macOS: ~/Library/Mobile Documents. Windows (iCloud for Windows): ~/iCloudDrive.
+export function icloudRoots() {
+  const h = os.homedir();
+  const mac = path.join(h, 'Library', 'Mobile Documents');
+  const win = path.join(process.env.USERPROFILE || h, 'iCloudDrive');
+  return {
+    obsidian: [path.join(mac, 'iCloud~md~obsidian', 'Documents'), path.join(win, 'iCloud~md~obsidian')],
+    drive: [path.join(mac, 'com~apple~CloudDocs'), win],
+  };
+}
+
+function subdirs(dir) {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && !d.name.startsWith('.') && !d.name.includes('~'))
+      .map((d) => path.join(dir, d.name));
+  } catch { return []; }
+}
+
+const isVault = (dir) => fs.existsSync(path.join(dir, '.obsidian'));
+
+export function discoverICloudVaults({ depth = 3, maxDirs = 2000 } = {}) {
+  const { obsidian, drive } = icloudRoots();
+  const out = [];
+  for (const root of obsidian) out.push(...subdirs(root));
+  let budget = maxDirs; // iCloud folders can be huge; never stall setup on a big tree
+  const walk = (dir, d) => {
+    for (const sub of subdirs(dir)) {
+      if (--budget < 0) return;
+      if (isVault(sub)) out.push(sub);
+      else if (d > 1) walk(sub, d - 1);
+    }
+  };
+  for (const root of drive) walk(root, depth);
+  return [...new Set(out)];
+}
+
+export function isICloudPath(p) {
+  const { obsidian, drive } = icloudRoots();
+  return [...obsidian, ...drive].some((r) => p === r || p.startsWith(r + path.sep));
+}
+
 export function discoverVaults() {
   const out = [];
   for (const p of obsidianConfigPaths()) {
     try {
       const j = JSON.parse(fs.readFileSync(p, 'utf8'));
-      for (const v of Object.values(j.vaults || {})) if (v.path && fs.existsSync(v.path)) out.push(v.path);
+      for (const v of Object.values(j.vaults || {})) if (v.path && fs.existsSync(v.path)) out.push(path.resolve(v.path));
     } catch { /* not present */ }
   }
+  out.push(...discoverICloudVaults());
   return [...new Set(out)];
 }
 
@@ -47,6 +93,8 @@ export function validateSettings(s) {
   if (!['folders', 'tags'].includes(s.organize_by)) errs.push('organize_by must be folders or tags');
   if (!/^[A-Za-z0-9_\-/]+$/.test(String(s.tag_prefix))) errs.push('tag_prefix may only contain letters, numbers, _ - /');
   if (!['remote-ics', 'connector'].includes(s.calendar_backend)) errs.push('calendar_backend must be remote-ics or connector');
+  // not tied to this machine's OS: Settings.md may sync to a Mac and a PC; non-Macs warn at read time
+  if (!['off', 'macos'].includes(s.calendar_apple)) errs.push('calendar_apple must be off or macos');
   for (const a of ACTIONS) if (!LEVELS.includes(String(s[`permission_${a}`]))) errs.push(`permission_${a} must be off, ask or auto`);
   return errs;
 }
@@ -93,7 +141,7 @@ export async function runWizard({ interactive = true, sets = {}, vault = null, r
       const found = discoverVaults();
       if (found.length) {
         log('Obsidian vaults found:');
-        found.forEach((v, i) => log(`  ${i + 1}. ${v}`));
+        found.forEach((v, i) => log(`  ${i + 1}. ${v}${isICloudPath(v) ? '  (iCloud)' : ''}`));
         const a = await ask('Pick a number or type a path', vaultPath || '1');
         vaultPath = /^\d+$/.test(a) && found[+a - 1] ? found[+a - 1] : a;
       } else {
@@ -136,6 +184,18 @@ export async function runWizard({ interactive = true, sets = {}, vault = null, r
       if (custom === 'n') s.calendar_publish_command = await ask('Upload command ({file}, {bucket}, {key} are filled in)', s.calendar_publish_command);
       else s.calendar_publish_command = DEFAULT_PUBLISH_COMMAND;
     }
+    if (appleSupported()) {
+      if (interactive) log('\n  Apple Calendar: on this Mac the secretary can read Calendar.app directly (every account in it) as busy time.');
+      s.calendar_apple = await choose('Read Apple Calendar?', ['macos', 'off'], s.calendar_apple);
+      if (s.calendar_apple === 'macos' && interactive) {
+        let cals = [];
+        try { if (appleAccess({ request: true }) === 'granted') cals = appleCalendars(); } catch (e) { log(`  ${e.message}`); }
+        if (cals.length) log(`  Calendars: ${cals.map((c) => c.title).join(', ')}`);
+        s.calendar_apple_names = list(await ask('Only these calendars (comma-separated, blank = all)', s.calendar_apple_names.join(', ')));
+      }
+    } else if (interactive) {
+      log('\n  Apple / iCloud calendars: on icloud.com/calendar, share a calendar as "Public Calendar" and paste\n  its webcal:// link below. Anyone with the link can read that calendar.');
+    }
     s.calendar_feeds = list(await ask('Extra read-only calendar feeds counted as busy (URLs, comma-separated, optional)', s.calendar_feeds.join(', ')));
 
     // 5. Email / messaging
@@ -154,7 +214,7 @@ export async function runWizard({ interactive = true, sets = {}, vault = null, r
       if (!(k in defaults)) throw new Error(`Unknown setting "${k}"`);
       s[k] = coerce(k, v, defaults);
     }
-    for (const k of ['work_days', 'vips', 'calendar_feeds']) s[k] = list(s[k]);
+    for (const k of ['work_days', 'vips', 'calendar_feeds', 'calendar_apple_names']) s[k] = list(s[k]);
     s.tags = [`${s.tag_prefix}/settings`];
     const errs = validateSettings(s);
     if (errs.length) throw new Error(`Invalid settings:\n  - ${errs.join('\n  - ')}`);

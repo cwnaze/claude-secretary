@@ -33,7 +33,13 @@ Things to know and tell the user when relevant:
 include `calendar_feeds`.
 
 **Feeds** — `calendar_feeds` are extra read-only calendars (e.g. Canvas, iCloud
-shared calendars) counted as busy. Never write to them.
+public calendar links) counted as busy. Never write to them.
+
+**Apple Calendar** — with `calendar_apple: macos` (Mac only), `sec ics list/free`
+also read Calendar.app directly; those events have `source: "apple:<calendar>"`.
+Read-only: never try to edit them through `sec ics`. Events that also come from
+the main file or a feed are shown once. If a warning says access isn't granted,
+run `sec apple access` and tell the user to allow Full Access when macOS asks.
 
 ## Reading
 

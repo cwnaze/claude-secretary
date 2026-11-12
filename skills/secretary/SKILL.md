@@ -95,7 +95,7 @@ get the right `type` and tags. Rules:
 
 ## Secretary check
 
-1. `sec check` → vault, layout, calendar file, uploader, feeds, permissions.
+1. `sec check` → vault, layout, calendar file, uploader, feeds, Apple Calendar, permissions.
 2. Look at **your own tool list** for email, calendar and messaging MCP tools
    (Gmail, Google Calendar, Outlook, Slack…). The script cannot see these.
 3. Report a short table: what works, what's missing, and how to fix each gap:

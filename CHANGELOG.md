@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Setup finds Obsidian vaults in iCloud Drive automatically: Obsidian's iCloud folder and any vault elsewhere in iCloud Drive, on macOS and with iCloud for Windows. `sec vaults` now returns `[{path, icloud}]`.
+- Apple Calendar: on macOS, `calendar_apple: macos` reads Calendar.app through EventKit (via `osascript`, no dependencies) as busy time in `ics list`, `ics free`, briefings and the dashboard; `calendar_apple_names` limits which calendars. New `sec apple status|access|calendars`; `sec check` reports access. On other systems, iCloud calendars are added as public `webcal://` feeds.
+- `ics list` / `ics free` no longer fail when the local calendar file is missing but feeds or Apple Calendar are configured; they warn and show the other calendars.
 - `npx claude-secretary uninstall` now also removes the `cwnaze` marketplace (`--keep-marketplace` to skip). Opt-in deletes, each listed and confirmed first (`--yes` to skip the prompt): `--purge` (`~/.claude-secretary.json` and the cache), `--remove-vault` (the `Secretary/` folder in the vault, recursively) and `--remove-ics` (the local calendar file).
 - Web dashboard (`sec ui`): read-only briefing page on localhost with today's hours, drafts held for your OK, blocked attempts, follow-ups due, people this week and month-to-date spend. Light and dark follow the system. Other sections are placeholders.
 - `lib/views.mjs` holds the read-only views shared by `sec` and the dashboard; `lib/dashboard.mjs` and `lib/server.mjs` are new.
