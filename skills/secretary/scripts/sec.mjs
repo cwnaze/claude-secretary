@@ -12,7 +12,8 @@ import { parseCalendar, addEvent, rewriteEvent, patchEventLines, newUid, freeSlo
 import { readMain, writeMain, backup, collectEvents, publish, pull, redact } from './lib/calendar.mjs';
 import { runWizard, discoverVaults } from './lib/wizard.mjs';
 import { createServer, listen, DEFAULT_PORT } from './lib/server.mjs';
-import { fmtEvents, followupsDue, peopleDue, invoicesDue, expenseSummary } from './lib/views.mjs';
+import { fmtEvents, followupsDue, peopleDue, invoicesDue, expenseSummary, dayRecap } from './lib/views.mjs';
+import { installSchedule, removeSchedule, installedJobs, briefingJobs, scheduler, findClaude } from './lib/schedule.mjs';
 
 const HELP = `claude-secretary — helper for the secretary skills
 
@@ -33,7 +34,12 @@ Views
   people due [--days 14]
   invoices due [--days 7]
   expenses summary [--month YYYY-MM]
-  briefing-data [--date YYYY-MM-DD] [--days 1]
+  briefing-data [--date YYYY-MM-DD|tomorrow] [--days 1] [--recap]
+                                 --recap adds what got done that day (log, completed follow-ups, new notes)
+Automatic briefings (briefing_morning / briefing_evening / briefing_days in Settings)
+  schedule [show]                 What Settings asks for and what is installed
+  schedule install [--claude PATH] [--dry-run]   (Re)install the jobs (launchd on macOS, crontab on Linux)
+  schedule remove [--dry-run]     Remove them
 Dashboard
   ui [--port ${DEFAULT_PORT}] [--open]      Serve the read-only web dashboard on localhost
 Calendar (remote-ics backend; feeds are used by both backends)
@@ -159,6 +165,8 @@ async function main() {
     return new Promise(() => {});
   }
 
+  if (cmd === 'schedule' && sub === 'remove') { out(removeSchedule({ dryRun: !!flags['dry-run'] })); return; }
+
   const cfg = loadConfig();
   const s = cfg.settings; const tz = s.timezone;
 
@@ -232,7 +240,8 @@ async function main() {
     case 'expenses': out(expenseSummary(cfg, flags.month || todayIn(tz).slice(0, 7))); return;
 
     case 'briefing-data': {
-      const date = flags.date || todayIn(tz);
+      const date = flags.date && /^\d{4}-\d{2}-\d{2}$/.test(String(flags.date)) ? String(flags.date)
+        : formatLocal(parseWhen(flags.date || 'today', tz), tz).slice(0, 10);
       const days = Number(flags.days ?? 1);
       const from = parseWhen(date, tz); const to = parseWhen(addDays(date, days), tz);
       let cal = { events: [], warnings: [] };
@@ -248,8 +257,24 @@ async function main() {
         invoices: invoicesDue(cfg, 7, date),
         budget_alerts: exp.categories.filter((c) => c.limit && c.spent >= 0.8 * c.limit),
         email_note: s.email_backend === 'connector' ? 'Check the connected email tool for messages needing a reply.' : 'No email backend configured.',
+        recap: flags.recap ? dayRecap(cfg, date) : undefined,
       });
       return;
+    }
+
+    case 'schedule': {
+      if (!sub || sub === 'show') {
+        out({ scheduler: scheduler(), wanted: briefingJobs(s), installed: installedJobs(), note: 'Run `sec schedule install` after changing briefing_* settings.' });
+        return;
+      }
+      if (sub === 'install') {
+        if (!cfg.settingsFound) throw new Error('Run setup first: no Settings.md found.');
+        const claude = flags.claude && flags.claude !== true ? path.resolve(String(flags.claude)) : findClaude();
+        const r = installSchedule({ settings: s, cwd: cfg.rootDir, claude, dryRun: !!flags['dry-run'] });
+        if (!flags['dry-run']) logAction(cfg, { action: 'schedule_briefings', target: r.scheduler, summary: r.jobs.map((j) => `${j.kind} ${j.time}`).join(', ') || 'none' });
+        out(r); return;
+      }
+      throw new Error('Usage: schedule show|install|remove');
     }
 
     case 'ics': return icsCommand(cfg, sub, rest, flags);

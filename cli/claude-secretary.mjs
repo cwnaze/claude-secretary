@@ -9,6 +9,7 @@ import readline from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { pointerPath, loadConfig, expandHome } from '../skills/secretary/scripts/lib/config.mjs';
+import { removeSchedule, briefingJobs } from '../skills/secretary/scripts/lib/schedule.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PKG_ROOT = path.resolve(here, '..');
@@ -147,6 +148,12 @@ async function uninstall(flags) {
     if (!(await confirm('Delete these? [y/N] '))) { console.log('Nothing was changed.'); return 1; }
   }
 
+  // Scheduled briefs would fail once the plugin is gone.
+  try {
+    const r = removeSchedule();
+    if (r.removed?.length) console.log(`Removed automatic briefings: ${r.removed.join(', ')}`);
+  } catch (e) { console.error(`Could not remove automatic briefings (${e.message}); run \`sec schedule remove\` or delete them by hand.`); }
+
   let code = 0;
   if (!claudeAvailable()) {
     console.error(`\`claude\` not found. Inside Claude Code run:\n  /plugin uninstall ${PLUGIN_ID}\n  /plugin marketplace remove ${MARKET.name}`);
@@ -184,6 +191,12 @@ async function main() {
       console.log('');
       const code = runSec(['init', ...(process.stdin.isTTY ? [] : ['--non-interactive'])]);
       if (code !== 0) process.exit(code);
+      const jobs = briefingJobs(loadConfig().settings);
+      if (process.stdin.isTTY && jobs.length) {
+        const when = jobs.map((j) => `${j.kind} ${j.time}`).join(', ');
+        if (await confirm(`\nTurn on automatic briefings now (${when})? [y/N] `)) runSec(['schedule', 'install']);
+        else console.log('Turn them on later with: sec schedule install (or ask Claude)');
+      }
       console.log(`
 Connections: email, calendar and Slack come from Claude's connectors (enable them at
 claude.ai/customize/connectors; they appear in Claude Code when you're signed in with a

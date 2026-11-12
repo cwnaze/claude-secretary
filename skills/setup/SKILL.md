@@ -45,6 +45,10 @@ otherwise. Keep it to as few rounds as possible:
    change any: `send_email: off`, `send_invites: off`, `contact_people: off`,
    `manage_calendar: ask`. Explain off / ask / auto in one line each. Never
    suggest `auto` yourself.
+8. **Automatic briefings** — a morning brief and an evening recap, written on
+   their own. Ask whether they want them, and at what times / on which days
+   (defaults 07:30 and 18:00, Mon–Fri). `--set briefing_morning=` (blank)
+   turns one off.
 
 ## 3. Write
 
@@ -61,6 +65,9 @@ sec init --non-interactive --vault "/path/to/vault" --root Secretary \
 Only pass `--set` for values the user gave; omitted keys keep their defaults or
 previous values. Feed URLs often contain private tokens: don't echo them back
 in full. Every key: `${CLAUDE_SKILL_DIR}/../secretary/references/settings.md`.
+
+If they want automatic briefings, run `sec schedule install` after `sec init`
+(details in the briefing skill).
 
 ## 4. Verify
 
