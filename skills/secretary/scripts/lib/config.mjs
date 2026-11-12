@@ -49,6 +49,10 @@ export function defaultSettings() {
     permission_manage_calendar: 'ask',
     currency: 'USD',
     keep_in_touch_days: 90,
+    briefing_morning: '07:30',
+    briefing_evening: '18:00',
+    briefing_days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+    briefing_allowed_tools: ['Bash(sec *)'],
   };
 }
 
@@ -148,6 +152,13 @@ Each outbound action is one of:
   links) counted as busy time. Works on any computer.
 - **calendar_apple: macos** — also read Apple Calendar (Calendar.app) directly on a Mac,
   limited to \`calendar_apple_names\` if set. Ignored with a warning on other computers.
+
+## Automatic briefings
+\`briefing_morning\` (what to do today) and \`briefing_evening\` (recap and what's left)
+are HH:MM times on \`briefing_days\`; leave one blank to skip it. They take effect when
+you run \`sec schedule install\` (again after changing them). \`briefing_allowed_tools\`
+lists the tools an unattended brief may use; add your email/calendar connector's
+read tools here to include them.
 
 Never put passwords, API keys or account numbers in this note.
 `;

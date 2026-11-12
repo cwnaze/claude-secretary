@@ -14,6 +14,7 @@ import { readNoteText } from './yaml.mjs';
 import { isValidTz } from './tz.mjs';
 import { ensureLayout } from './vault.mjs';
 import { appleSupported, appleAccess, appleCalendars } from './apple.mjs';
+import { unsafeValue } from './schedule.mjs';
 
 export function obsidianConfigPaths() {
   const h = os.homedir();
@@ -85,6 +86,7 @@ export function discoverVaults() {
 
 const list = (s) => (Array.isArray(s) ? s : String(s || '').split(',')).map((x) => String(x).trim()).filter(Boolean);
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 export function validateSettings(s) {
   const errs = [];
@@ -96,6 +98,12 @@ export function validateSettings(s) {
   // not tied to this machine's OS: Settings.md may sync to a Mac and a PC; non-Macs warn at read time
   if (!['off', 'macos'].includes(s.calendar_apple)) errs.push('calendar_apple must be off or macos');
   for (const a of ACTIONS) if (!LEVELS.includes(String(s[`permission_${a}`]))) errs.push(`permission_${a} must be off, ask or auto`);
+  for (const k of ['briefing_morning', 'briefing_evening']) {
+    const v = String(s[k] ?? '').trim();
+    if (v && v !== 'off' && !TIME.test(v)) errs.push(`${k} must be HH:MM, or blank to turn it off`);
+  }
+  for (const d of list(s.briefing_days)) if (!DAYS.includes(d.toLowerCase())) errs.push(`briefing_days: "${d}" is not one of ${DAYS.join(', ')}`);
+  for (const t of list(s.briefing_allowed_tools)) if (unsafeValue(t)) errs.push(`briefing_allowed_tools: "${t}" contains quotes or shell characters`);
   return errs;
 }
 
@@ -209,12 +217,20 @@ export async function runWizard({ interactive = true, sets = {}, vault = null, r
 
     s.currency = await ask('Currency for expenses', s.currency);
 
+    // 7. Automatic briefings (installed separately with `sec schedule install`)
+    if (interactive) log('\n-- Automatic briefings --\n  A morning brief (what to do today) and an evening recap (what got done, what is left).\n  Type "off" to skip one.');
+    s.briefing_morning = await ask('Morning brief at (HH:MM)', s.briefing_morning || 'off');
+    s.briefing_evening = await ask('Evening recap at (HH:MM)', s.briefing_evening || 'off');
+    s.briefing_days = list(await ask('On which days', s.briefing_days.join(',')));
+
     // apply --set overrides last
     for (const [k, v] of Object.entries(sets)) {
       if (!(k in defaults)) throw new Error(`Unknown setting "${k}"`);
       s[k] = coerce(k, v, defaults);
     }
     for (const k of ['work_days', 'vips', 'calendar_feeds', 'calendar_apple_names']) s[k] = list(s[k]);
+    for (const k of ['work_days', 'vips', 'calendar_feeds', 'briefing_days', 'briefing_allowed_tools']) s[k] = list(s[k]);
+    for (const k of ['briefing_morning', 'briefing_evening']) if (String(s[k]).trim() === 'off') s[k] = '';
     s.tags = [`${s.tag_prefix}/settings`];
     const errs = validateSettings(s);
     if (errs.length) throw new Error(`Invalid settings:\n  - ${errs.join('\n  - ')}`);

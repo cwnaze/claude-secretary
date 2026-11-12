@@ -1,5 +1,7 @@
 // Read-only views over the vault, shared by the `sec` CLI and the dashboard server.
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { findNotes } from './vault.mjs';
 import { todayIn, addDays, daysBetween, formatLocal } from './tz.mjs';
 
@@ -97,3 +99,34 @@ export function expenseSummary(cfg, month) {
   };
 }
 
+
+// Rows of Log.md whose timestamp starts with `date`.
+export function logRows(cfg, date) {
+  let text;
+  try { text = fs.readFileSync(path.join(cfg.rootDir, 'Log.md'), 'utf8'); } catch { return []; }
+  const rows = [];
+  for (const line of text.split('\n')) {
+    if (!line.startsWith(`| ${date}`)) continue;
+    const cells = line.slice(1, -1).split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, '|'));
+    if (cells.length < 5) continue;
+    const [when, action, target, summary, status] = cells;
+    rows.push({ when, action, target, summary, status });
+  }
+  return rows;
+}
+
+// What happened on `date`, for the evening recap: actions logged, follow-ups
+// completed, and notes created (meetings, drafts, expenses…).
+export function dayRecap(cfg, date) {
+  const skip = new Set(['briefing', 'log', 'settings', 'budget']);
+  const all = findNotes(cfg);
+  const day = (v) => (v ? String(v).slice(0, 10) : '');
+  return {
+    date,
+    log: logRows(cfg, date),
+    completed: all.filter((n) => n.type === 'followup' && ['done', 'dropped'].includes(String(n.status)) && day(n.completed) === date)
+      .map((n) => ({ path: n.path, title: n.title, kind: n.kind || 'todo', status: n.status, counterpart: n.counterpart || undefined })),
+    created: all.filter((n) => !skip.has(n.type) && day(n.created) === date)
+      .map((n) => ({ path: n.path, title: n.title, type: n.type, status: n.status || undefined })),
+  };
+}

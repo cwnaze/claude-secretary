@@ -58,7 +58,7 @@ local scope. From inside Claude Code: `/plugin uninstall secretary@cwnaze`, then
 |---|---|
 | `/secretary:setup` | First-time setup and reconfiguration, done in the chat |
 | `/secretary:secretary` | Core: settings, permissions, routing, "secretary check" |
-| `/secretary:briefing` | Daily brief and weekly review/preview, saved to `Briefings/` |
+| `/secretary:briefing` | Morning brief, evening recap and weekly review/preview, saved to `Briefings/`; can run on a schedule |
 | `/secretary:inbox` | Triage (urgent/reply/delegate/waiting/FYI/archive/suspicious), reply drafts, gatekeeping |
 | `/secretary:calendar` | Free-time search, booking/moving/cancelling, conflicts, scheduling drafts |
 | `/secretary:meetings` | Prep briefs and agendas, minutes, action items → follow-ups, recap drafts |
@@ -68,6 +68,28 @@ local scope. From inside Claude Code: `/plugin uninstall secretary@cwnaze`, then
 
 You don't have to type the commands: "brief me", "when am I free Thursday?" or
 "triage my inbox" load the right skill on their own.
+
+## Automatic briefings
+
+Your secretary can write a **morning brief** (what to do today) and an **evening recap** (what got
+done, what's left over, tomorrow's first thing) on its own. Set the times in setup or in
+`Settings.md` (`briefing_morning: 07:30`, `briefing_evening: 18:00`, `briefing_days`), then turn
+them on:
+
+```bash
+sec schedule install      # or ask Claude: "brief me automatically every morning and evening"
+sec schedule              # what's wanted vs. installed
+sec schedule remove
+```
+
+On macOS this adds launchd agents (`~/Library/LaunchAgents/com.cwnaze.claude-secretary.briefing.*`);
+on Linux, two crontab lines. Each runs `claude -p "/secretary:briefing morning scheduled"` with
+only the tools in `briefing_allowed_tools` (default `Bash(sec *)`, so no connectors: add your
+mail/calendar connector's read tools there if you want them in the brief). Output goes to
+`~/.cache/claude-secretary/briefing-<kind>.log`. A run that finds that day's brief already written
+does nothing. Each run uses Claude usage like a normal chat, and the computer has to be on; a
+sleeping Mac runs the missed brief when it wakes. Re-run `sec schedule install` after changing the
+times. `npx claude-secretary uninstall` removes the jobs.
 
 ## Permissions
 
@@ -151,7 +173,8 @@ Ask Claude for a "secretary check" to see what's connected and what's missing.
 
 While the plugin is enabled, `sec` is on Claude's PATH (from `bin/`). It is a
 zero-dependency Node CLI (`sec help`) for notes and views (`followups due`,
-`people due`, `invoices due`, `expenses summary`, `briefing-data`). It also
+`people due`, `invoices due`, `expenses summary`, `briefing-data`), plus `schedule` for automatic
+briefings. It also
 handles ICS: RRULE, EXDATE, RECURRENCE-ID, TZID/DST, free-slot search, editing
 and publishing.
 

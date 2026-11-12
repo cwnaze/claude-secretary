@@ -65,6 +65,18 @@ Values substituted into `{bucket}`/`{key}`/`{file}` may not contain `"`, `` ` ``
 
 Values: `off`, `ask`, `auto`. Anything else is treated as `off`.
 
+## Automatic briefings
+| Key | Default | Meaning |
+|---|---|---|
+| `briefing_morning` | 07:30 | Time of the morning brief (what to do today); blank = off |
+| `briefing_evening` | 18:00 | Time of the evening recap (done today, left over, tomorrow); blank = off |
+| `briefing_days` | mon–fri | Days both run |
+| `briefing_allowed_tools` | [`Bash(sec *)`] | Tools a scheduled run may use (`--allowedTools`); add connector read tools to include mail/calendar |
+
+Nothing runs until `sec schedule install` (re-run it after changes; `sec schedule remove` stops
+them). macOS uses launchd agents, Linux crontab. Entries may not contain quotes, `$`, `%`, `\` or
+other shell characters.
+
 ## Other
 | Key | Default | Meaning |
 |---|---|---|
