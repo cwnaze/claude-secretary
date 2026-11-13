@@ -26,12 +26,30 @@
 ul.notice li + li { margin-top: 2px; }
 
 .allDay { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
-.allDay li {
+.allDay button {
   display: inline-flex; gap: 8px; align-items: baseline;
   padding: 4px 10px; border-radius: 4px; background: var(--page-2); border: 1px solid var(--line);
-  font-weight: 600; font-size: 13.5px;
+  color: var(--ink); font: 600 13.5px/1.4 var(--sans); text-align: left; cursor: pointer;
+  transition: border-color 150ms ease-out;
 }
+.allDay button:hover { border-color: var(--rule); }
 .allDay span { font-weight: 500; font-size: 12px; color: var(--hour); }
+
+/* Assignments and other deadlines: due times in the margin's red, like a diary's "due" column. */
+.due { margin-top: 14px; }
+.due h2 { font: 700 11px/16px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--margin); }
+.due ul { margin-top: 4px; display: flex; flex-direction: column; }
+.due li { border-bottom: 1px solid var(--rule-soft); }
+.due button {
+  display: grid; grid-template-columns: var(--gutter) minmax(0, 1fr); align-items: baseline; width: 100%;
+  padding: 5px 0; border: 0; background: transparent; color: var(--ink);
+  font: 500 14px/1.35 var(--sans); text-align: left; cursor: pointer;
+}
+.due button:hover span { text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+.due time { white-space: nowrap; font-size: 12.5px; font-weight: 700; color: var(--margin); font-variant-numeric: tabular-nums; }
+.due span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.due li[data-past] time { color: var(--ink-3); }
+.due li[data-past] span { color: var(--ink-2); }
 
 .hours { position: relative; margin-top: 4px; }
 .hr {
@@ -45,13 +63,19 @@ ul.notice li + li { margin-top: 2px; }
 .events > * { pointer-events: auto; }
 .ev {
   position: absolute; overflow: hidden;
-  padding: 6px 12px; border-radius: 4px;
+  border-radius: 4px;
   background: var(--page-2); border: 1px solid var(--line);
-  transition: background-color 200ms ease-out;
+  transition: background-color 200ms ease-out, border-color 150ms ease-out;
 }
+.ev:hover { border-color: var(--rule); }
+.ev > button {
+  display: block; width: 100%; height: 100%; padding: 6px 12px;
+  border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.ev > button:focus-visible { outline-offset: -2px; }
 .ev b { display: block; font-weight: 600; font-size: 14px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ev small { display: block; color: var(--ink-2); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ev[data-short] { padding-top: 3px; padding-bottom: 3px; display: flex; gap: 8px; align-items: baseline; }
+.ev[data-short] > button { padding-top: 3px; padding-bottom: 3px; display: flex; gap: 8px; align-items: baseline; }
 .ev[data-short] b { flex: 0 1 auto; }
 .ev[data-short] small { flex: 1 1 0; }
 .ev[data-past] { background: var(--page); border-color: var(--rule-soft); }
@@ -68,6 +92,25 @@ ul.notice li + li { margin-top: 2px; }
 }
 .free b { display: block; font-weight: 600; font-size: 13.5px; }
 .free small { font-size: 12.5px; }
+
+/* A deadline inside the visible hours: a dashed red rule across the page (under the events, so it
+   never strikes through them) with a tab at the right on top. No z-index here, so the rule and the
+   tab layer separately against the events list. */
+.dueMark {
+  position: absolute; left: var(--gutter); right: 0; height: 0;
+  padding: 0; border: 0; background: transparent; cursor: pointer;
+}
+.dueMark::before { content: ''; position: absolute; left: 0; right: 0; top: 0; border-top: 1.5px dashed var(--margin); z-index: 1; }
+.dueMark span {
+  position: absolute; right: 0; top: -9px; max-width: 70%; z-index: 3;
+  padding: 0 8px; border-radius: 3px; background: var(--page); border: 1px solid var(--margin);
+  font: 600 12px/16px var(--sans); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dueMark i { font-style: normal; color: var(--margin); margin-right: 6px; }
+.dueMark:hover span { background: var(--page-2); }
+.dueMark[data-past]::before { border-top-color: var(--ink-3); }
+.dueMark[data-past] span { border-color: var(--line); color: var(--ink-2); }
+.dueMark[data-past] i { color: var(--ink-3); }
 
 .empty { position: absolute; left: var(--gutter); top: calc(1.5 * var(--hour-h)); color: var(--ink-2); }
 
@@ -95,9 +138,10 @@ ul.notice li + li { margin-top: 2px; }
   .head h1 { font-size: 26px; }
   .ribbon { left: -16px; }
   .ribbon::before { display: none; }
-  .ev { padding: 4px 8px; }
+  .ev > button { padding: 4px 8px; }
+  .due button { grid-template-columns: 68px minmax(0, 1fr); }
   .ev b, .ev small { white-space: normal; }
   .ev .loc { display: none; }
-  .ev[data-short] { display: block; }
+  .ev[data-short] > button { display: block; }
   .ev[data-short] small { display: none; }
 }

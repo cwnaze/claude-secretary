@@ -53,6 +53,7 @@ function run(argv) {
       start: Number(e.startDate.timeIntervalSince1970), end: Number(e.endDate.timeIntervalSince1970),
       allDay: !!e.allDay, availability: Number(e.availability), status: Number(e.status),
       recurring: !!e.hasRecurrenceRules,
+      url: e.URL.isNil() ? '' : str(e.URL.absoluteString), notes: str(e.notes),
     });
   }
   return JSON.stringify({ status: st, events: out });
@@ -90,6 +91,7 @@ export function appleCalendars() {
 export function mapAppleEvents(rows) {
   return rows.map((e) => ({
     uid: e.uid, summary: e.summary, location: e.location || undefined, allDay: !!e.allDay,
+    description: e.notes || undefined, url: e.url || undefined,
     status: e.status === 3 ? 'CANCELLED' : e.status === 2 ? 'TENTATIVE' : undefined,
     transparent: e.availability === 1, // EKEventAvailabilityFree
     ours: false, source: `apple:${e.calendar || 'calendar'}`, recurring: !!e.recurring,

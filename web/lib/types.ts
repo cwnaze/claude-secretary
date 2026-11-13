@@ -14,6 +14,13 @@ export interface CalEvent {
   ours?: boolean;
   busy: boolean;
   status?: string;
+  deadline?: boolean; // an assignment or other due time, not a block of time
+  due?: string; // local "YYYY-MM-DDTHH:MM"
+  link?: string;
+  join?: string; // video-call link
+  description?: string;
+  meeting?: { path: string; title: string; status?: string };
+  tasks?: { path: string; title: string; kind: string; due: string | null }[];
 }
 
 export interface Draft { path: string; title: string; to?: string; subject?: string; channel: string; created?: string }
@@ -37,7 +44,11 @@ export interface HomeData {
   calendar_backend: 'remote-ics' | 'connector';
   events: CalEvent[];
   calendar_warnings: string[];
-  briefing: { title: string; date: string; created: string | null; path: string; summary: string | null } | null;
+  briefing: { title: string; date: string; created: string | null; path: string; summary: string | null; body: string | null } | null;
+  triage: {
+    title: string; date: string; created: string | null; path: string; summary: string | null;
+    buckets: { name: string; count: number; items: { from: string; subject: string; summary: string }[] }[];
+  } | null;
   drafts: Draft[];
   blocked: LogRow[];
   sent_today: number;
