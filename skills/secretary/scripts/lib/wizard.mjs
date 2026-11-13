@@ -118,10 +118,20 @@ function coerce(key, value, defaults) {
 export async function runWizard({ interactive = true, sets = {}, vault = null, root = null, log = console.log } = {}) {
   const defaults = defaultSettings();
   const prevPtr = readPointer();
-  let prev = {};
-  if (prevPtr?.vault && fs.existsSync(settingsPath(prevPtr))) {
-    prev = readNoteText(fs.readFileSync(settingsPath(prevPtr), 'utf8')).data;
-  }
+  // Read any settings that already exist at the *effective* target, i.e. the
+  // location --vault/--root points at, not whatever the old pointer said.
+  // Reading only the old pointer meant that repointing at a location which
+  // already had its own Settings.md never loaded it, so the wizard wrote
+  // defaults straight over a real config.
+  // Fall back to the old pointer when the target has nothing yet, so moving a
+  // vault still carries the previous settings across.
+  const readSettingsAt = (ptr) => (
+    ptr?.vault && fs.existsSync(settingsPath(ptr))
+      ? readNoteText(fs.readFileSync(settingsPath(ptr), 'utf8')).data
+      : null
+  );
+  const target = { vault: vault || prevPtr?.vault, root: root || prevPtr?.root };
+  const prev = readSettingsAt(target) ?? readSettingsAt(prevPtr) ?? {};
   const s = { ...defaults, ...Object.fromEntries(Object.entries(prev).filter(([, v]) => v !== null)) };
   let rl = null;
   const ask = async (q, def = '') => {
