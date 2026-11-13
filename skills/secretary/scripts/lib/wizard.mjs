@@ -92,6 +92,12 @@ export function validateSettings(s) {
   const errs = [];
   if (!isValidTz(s.timezone)) errs.push(`timezone "${s.timezone}" is not a valid IANA zone`);
   for (const k of ['work_start', 'work_end', 'hard_stop']) if (!TIME.test(String(s[k]))) errs.push(`${k} must be HH:MM`);
+  for (const d of list(s.work_days)) if (!DAYS.includes(d.toLowerCase())) errs.push(`work_days: "${d}" is not one of ${DAYS.join(', ')}`);
+  for (const k of ['meeting_buffer_min', 'default_meeting_min', 'keep_in_touch_days']) {
+    const n = Number(s[k]);
+    if (!Number.isInteger(n) || n < 0 || (k === 'default_meeting_min' && n === 0)) errs.push(`${k} must be a whole number${k === 'default_meeting_min' ? ' above 0' : ', 0 or more'}`);
+  }
+  for (const k of ['email_backend', 'messaging_backend']) if (!['connector', 'none'].includes(s[k])) errs.push(`${k} must be connector or none`);
   if (!['folders', 'tags'].includes(s.organize_by)) errs.push('organize_by must be folders or tags');
   if (!/^[A-Za-z0-9_\-/]+$/.test(String(s.tag_prefix))) errs.push('tag_prefix may only contain letters, numbers, _ - /');
   if (!['remote-ics', 'connector'].includes(s.calendar_backend)) errs.push('calendar_backend must be remote-ics or connector');

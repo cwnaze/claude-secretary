@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Dashboard Settings page (#14): edit permissions, profile, working hours, calendar (backend, file, feeds, Apple Calendar), briefing times and vault options from `sec ui`. `POST /api/settings` patches only the changed keys in `Settings.md` (body and unknown keys kept), runs `validateSettings()`, refuses a save if the note changed since the page loaded, and needs a localhost Origin and a JSON body. The upload command and `briefing_allowed_tools` stay read-only there; feed links are shown redacted and edited by add/remove.
+- `validateSettings()` also checks `work_days`, the minute/day numbers, and `email_backend`/`messaging_backend`.
 - Setup finds Obsidian vaults in iCloud Drive automatically: Obsidian's iCloud folder and any vault elsewhere in iCloud Drive, on macOS and with iCloud for Windows. `sec vaults` now returns `[{path, icloud}]`.
 - Apple Calendar: on macOS, `calendar_apple: macos` reads Calendar.app through EventKit (via `osascript`, no dependencies) as busy time in `ics list`, `ics free`, briefings and the dashboard; `calendar_apple_names` limits which calendars. New `sec apple status|access|calendars`; `sec check` reports access. On other systems, iCloud calendars are added as public `webcal://` feeds.
 - `ics list` / `ics free` no longer fail when the local calendar file is missing but feeds or Apple Calendar are configured; they warn and show the other calendars.

