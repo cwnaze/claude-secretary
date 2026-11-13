@@ -73,10 +73,18 @@ export async function fetchFeed(url, { ttlMs = 15 * 60000 } = {}) {
   }
 }
 
-// Feed URLs often embed private tokens; never print them in full.
+// Feed URLs often embed private tokens; never print any of the path.
+// Keeping the first 24 characters still leaked real secrets — for a secret
+// GitHub Gist that is the username plus roughly a third of the gist id. A
+// short digest of the full URL distinguishes feeds just as well while
+// revealing nothing that can be used to fetch one.
 export function redact(u) {
-  try { const x = new URL(feedUrl(u)); return `${x.protocol}//${x.host}${x.pathname.length > 24 ? x.pathname.slice(0, 24) + '…' : x.pathname}`; }
-  catch { return '(feed)'; }
+  try {
+    const full = feedUrl(u);
+    const x = new URL(full);
+    const tag = crypto.createHash('sha256').update(full).digest('hex').slice(0, 6);
+    return `${x.protocol}//${x.host}#${tag}`;
+  } catch { return '(feed)'; }
 }
 
 export function appleEnabled(settings) { return String(settings.calendar_apple || 'off').toLowerCase() === 'macos'; }

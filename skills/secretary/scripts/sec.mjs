@@ -270,7 +270,7 @@ async function main() {
       out({
         date, days, timezone: tz, calendar_backend: s.calendar_backend,
         calendar_note: s.calendar_backend === 'connector' ? 'Fetch events from the connected calendar tool; only extra feeds are included below.' : undefined,
-        events: fmtEvents(cal.events, tz), calendar_warnings: cal.warnings,
+        events: fmtEvents(cal.events, tz, s.all_day_is_busy), calendar_warnings: cal.warnings,
         followups: followupsDue(cfg, 0, date),
         people: peopleDue(cfg, 7, date),
         invoices: invoicesDue(cfg, 7, date),
@@ -309,7 +309,7 @@ async function icsCommand(cfg, sub, rest, flags) {
     case 'list': {
       const from = parseWhen(flags.from || 'today', tz); const to = parseWhen(flags.to || '+7d', tz);
       const r = await collectEvents(s, from, to, { feeds: !flags['no-feeds'] });
-      out({ timezone: tz, from: formatLocal(from, tz), to: formatLocal(to, tz), events: fmtEvents(r.events, tz), warnings: r.warnings });
+      out({ timezone: tz, from: formatLocal(from, tz), to: formatLocal(to, tz), events: fmtEvents(r.events, tz, s.all_day_is_busy), warnings: r.warnings });
       return;
     }
     case 'free': {
