@@ -205,6 +205,7 @@ export async function homeData(cfg, { date = null, now = Date.now() } = {}) {
     root: cfg.root,
     settings_found: cfg.settingsFound,
     calendar_backend: st.calendar_backend,
+    events: fmtEvents(cal.events, tz, st.all_day_is_busy),
     events: dayEvents(cfg, cal.events, tz),
     calendar_warnings: cal.warnings,
     briefing: latestBriefing(cfg, day),

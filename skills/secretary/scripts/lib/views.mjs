@@ -5,21 +5,26 @@ import path from 'node:path';
 import { findNotes } from './vault.mjs';
 import { todayIn, addDays, daysBetween, formatLocal } from './tz.mjs';
 
-export function fmtEvent(e, tz) {
+// `allDayIsBusy` mirrors the all_day_is_busy setting. Without it, every
+// all-day event is reported busy, which contradicts `ics free` — that applies
+// the setting, so the two commands disagreed about the same events.
+export function fmtEvent(e, tz, allDayIsBusy = false) {
   return {
     uid: e.uid, summary: e.summary,
     start: e.allDay ? formatLocal(e.start, 'UTC').slice(0, 10) : formatLocal(e.start, tz),
     end: e.allDay ? formatLocal(e.end, 'UTC').slice(0, 10) : formatLocal(e.end, tz),
     allDay: e.allDay, location: e.location || undefined, source: e.source,
     recurring: e.recurring || undefined, ours: e.ours || undefined,
-    busy: !(e.transparent || e.status === 'CANCELLED'),
+    busy: !(e.transparent || e.status === 'CANCELLED') && (!e.allDay || allDayIsBusy),
     status: e.status || undefined,
   };
 }
 
 // all-day events are parsed in the user's tz; recompute display from wall date
-export function fmtEvents(evts, tz) {
-  return evts.map((e) => (e.allDay ? { ...fmtEvent(e, tz), start: formatLocal(e.start, tz).slice(0, 10), end: formatLocal(e.end, tz).slice(0, 10) } : fmtEvent(e, tz)));
+export function fmtEvents(evts, tz, allDayIsBusy = false) {
+  return evts.map((e) => (e.allDay
+    ? { ...fmtEvent(e, tz, allDayIsBusy), start: formatLocal(e.start, tz).slice(0, 10), end: formatLocal(e.end, tz).slice(0, 10) }
+    : fmtEvent(e, tz, allDayIsBusy)));
 }
 
 export function followupsDue(cfg, days, today = todayIn(cfg.settings.timezone)) {
