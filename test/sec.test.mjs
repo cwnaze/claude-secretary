@@ -114,6 +114,32 @@ test('CLI: permissions gate calendar writes', () => {
   assert.equal(run('init', '--non-interactive', '--set', 'permission_send_email=banana').code, 1);
 });
 
+test('CLI: init does not overwrite settings already at the target vault', () => {
+  const { home, run } = sandbox();
+  const A = path.join(home, 'A'); const B = path.join(home, 'B');
+  const settingsOf = (v) => readNoteText(fs.readFileSync(path.join(v, 'Secretary', 'Settings.md'), 'utf8')).data;
+
+  // A is the real config; B is a second vault that leaves the pointer on B.
+  assert.equal(run('init', '--non-interactive', '--vault', A, '--set', 'name=Real', '--set', `timezone=${NY}`).code, 0);
+  assert.equal(run('init', '--non-interactive', '--vault', B, '--set', 'name=Other').code, 0);
+
+  // Repoint at A. A already has its own Settings.md, so it must survive —
+  // the pointer (B) must not decide what gets written to A.
+  assert.equal(run('init', '--non-interactive', '--vault', A).code, 0);
+  assert.equal(settingsOf(A).name, 'Real');
+  assert.equal(settingsOf(A).timezone, NY);
+});
+
+test('CLI: init at a brand-new vault still inherits the previous settings', () => {
+  const { home, run } = sandbox();
+  const A = path.join(home, 'A'); const C = path.join(home, 'C');
+  assert.equal(run('init', '--non-interactive', '--vault', A, '--set', 'name=Carried', '--set', `timezone=${NY}`).code, 0);
+  assert.equal(run('init', '--non-interactive', '--vault', C).code, 0);
+  const sC = readNoteText(fs.readFileSync(path.join(C, 'Secretary', 'Settings.md'), 'utf8')).data;
+  assert.equal(sC.name, 'Carried');
+  assert.equal(sC.timezone, NY);
+});
+
 test('CLI: foreign and recurring events need --force', () => {
   const { home, run } = sandbox();
   const ics = path.join(home, 'cal.ics');

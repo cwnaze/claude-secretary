@@ -118,11 +118,15 @@ function coerce(key, value, defaults) {
 export async function runWizard({ interactive = true, sets = {}, vault = null, root = null, log = console.log } = {}) {
   const defaults = defaultSettings();
   const prevPtr = readPointer();
-  let prev = {};
-  if (prevPtr?.vault && fs.existsSync(settingsPath(prevPtr))) {
-    prev = readNoteText(fs.readFileSync(settingsPath(prevPtr), 'utf8')).data;
-  }
-  const s = { ...defaults, ...Object.fromEntries(Object.entries(prev).filter(([, v]) => v !== null)) };
+  const readSettingsAt = (ptr) => (
+    ptr?.vault && fs.existsSync(settingsPath(ptr))
+      ? readNoteText(fs.readFileSync(settingsPath(ptr), 'utf8')).data
+      : null
+  );
+  // Starts as bare defaults; the target's existing settings are merged in at
+  // the end of step 1, once the vault/root are actually known. Nothing reads
+  // `s` before then (step 2 is the first use).
+  const s = { ...defaults };
   let rl = null;
   const ask = async (q, def = '') => {
     if (!interactive) return def;
@@ -164,6 +168,18 @@ export async function runWizard({ interactive = true, sets = {}, vault = null, r
       fs.mkdirSync(vaultPath, { recursive: true });
     }
     const rootFolder = root || (interactive ? await ask('Folder inside the vault for secretary notes', prevPtr?.root || 'Secretary') : (prevPtr?.root || 'Secretary'));
+
+    // Load any settings already at the target. This has to happen HERE, not at
+    // function entry: interactively the vault and root come from the prompts
+    // above, so at entry they are still null and `target` would be the old
+    // pointer. Reading the old pointer meant repointing at a location that
+    // already had its own Settings.md never loaded it — the wizard prefilled
+    // every prompt with the old values and wrote them over the real config.
+    // Fall back to the old pointer when the target has none, so moving a vault
+    // still carries settings across.
+    const prev = readSettingsAt({ vault: vaultPath, root: rootFolder })
+      ?? readSettingsAt(prevPtr) ?? {};
+    Object.assign(s, Object.fromEntries(Object.entries(prev).filter(([, v]) => v !== null)));
 
     // 2. Organisation
     s.organize_by = await choose('Organise notes by', ['folders', 'tags'], s.organize_by);
