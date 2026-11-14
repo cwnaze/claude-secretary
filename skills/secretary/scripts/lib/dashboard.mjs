@@ -158,9 +158,16 @@ function eventNotes(cfg) {
   };
 }
 
+// `busy` is decided in one place and then narrowed in exactly one way:
+//   1. fmtEvents applies the base rule — not transparent/cancelled, and
+//      all-day events only count when all_day_is_busy is on.
+//   2. a deadline is never occupied time, so it overrides step 1 even when
+//      all_day_is_busy is on. This is deliberate, not a leftover: deadlineOf
+//      also matches zero-duration *timed* events, which step 1 doesn't cover.
+// Passing the setting through is what stops step 1 being silently skipped here.
 function dayEvents(cfg, raw, tz) {
   const notesFor = eventNotes(cfg);
-  return fmtEvents(raw, tz).map((f, i) => {
+  return fmtEvents(raw, tz, cfg.settings.all_day_is_busy).map((f, i) => {
     const due = deadlineOf(f);
     return {
       ...f,
