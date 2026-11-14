@@ -391,6 +391,7 @@ test('dashboard settings: patch Settings.md through validation, same-site JSON o
     assert.match(text, /my_custom: keep me/);
     assert.match(text, /My own notes\.\n$/);
     assert.match(text, /# Secretary settings/);
+    if (process.platform !== 'win32') assert.equal(fs.statSync(sp).mode & 0o777, 0o600);
     const st = getConfig().settings;
     assert.equal(st.name, 'Casey');
     assert.equal(st.permission_send_email, 'ask');

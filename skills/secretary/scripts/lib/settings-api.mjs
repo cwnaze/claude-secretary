@@ -146,7 +146,7 @@ export function saveSettings(cfg, body) {
   }
   fs.mkdirSync(path.dirname(cfg.settingsPath), { recursive: true });
   const tmp = `${cfg.settingsPath}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, next);
+  fs.writeFileSync(tmp, next, { mode: 0o600 });
   fs.renameSync(tmp, cfg.settingsPath);
   return { changed, schedule_changed: changed.some((k) => k.startsWith('briefing_')) };
 }
