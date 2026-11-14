@@ -180,15 +180,19 @@ and publishing.
 
 ## Dashboard
 
-`sec ui` serves a read-only dashboard at `http://localhost:7410/` (`--port` to change it,
+`sec ui` serves a dashboard at `http://localhost:7410/` (`--port` to change it,
 `--open` to open your browser). Outside Claude Code, run `npx claude-secretary ui`; it reads the
 same vault and doesn't need Claude Code running. The home page is today's briefing: your day ruled by the hour
 with the current time marked, drafts held for your OK, blocked send attempts, follow-ups due,
-people to reach this week, and this month's spend. Rows open the note in Obsidian. The other
-sections aren't built yet.
+people to reach this week, and this month's spend. Rows open the note in Obsidian. The Settings
+page edits `Settings.md`: permissions, profile, working hours, calendar, briefing times and vault
+options, checked by the same validation as setup. The other sections aren't built yet.
 
-The server only listens on 127.0.0.1, refuses requests for any other host name, and never writes
-to the vault. It follows your system's light or dark setting.
+The server only listens on 127.0.0.1 and refuses requests for any other host name. Its one write
+is the Settings page: it changes only the keys you edited in `Settings.md` (your own notes and extra
+keys stay), and only accepts JSON from a localhost page. The upload command and the tools a
+scheduled briefing may use can't be changed from the page; edit those in Obsidian. Calendar feed
+links are shown shortened, because they often contain private keys. It follows your system's light or dark setting.
 
 ## Development
 

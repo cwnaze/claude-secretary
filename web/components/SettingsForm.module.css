@@ -1,0 +1,132 @@
+/* Settings: one long ruled page. Labels in the left margin, controls on the lines, the save strip pinned below. */
+
+.main { max-width: 960px; margin: 0 auto; padding: 48px 56px 0; }
+.h1 {
+  font: 600 34px/1.15 var(--serif); letter-spacing: -0.01em;
+  padding-bottom: 14px; border-bottom: 2px solid var(--margin);
+}
+.lede { margin-top: 14px; max-width: 64ch; color: var(--ink-2); font-size: 15px; }
+.lede code, .code {
+  padding: 1px 6px; border-radius: 4px; background: var(--page-2); border: 1px solid var(--line);
+  font: 500 13px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.section { margin-top: 40px; }
+.h2 {
+  display: flex; align-items: baseline; flex-wrap: wrap; column-gap: 10px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+  font: 600 21px/1.25 var(--serif);
+}
+.h2 small { font: 500 12.5px/1.4 var(--sans); color: var(--ink-2); }
+
+.row {
+  display: grid; grid-template-columns: minmax(0, 17rem) minmax(0, 1fr); gap: 8px 32px;
+  padding: 14px 0; border-bottom: 1px solid var(--rule-soft); position: relative;
+}
+/* An unsaved edit gets the ribbon in the margin. */
+.row[data-changed]::before {
+  content: ''; position: absolute; left: -18px; top: 14px; bottom: 14px; width: 3px; border-radius: 2px; background: var(--margin);
+}
+.label { display: flex; flex-direction: column; gap: 3px; padding-top: 6px; min-width: 0; }
+.label > span, .label > label { font-weight: 600; }
+.label small { color: var(--ink-2); font-size: 13px; line-height: 1.45; max-width: 44ch; }
+.control { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.input {
+  width: 100%; max-width: 32rem; min-height: 38px; padding: 7px 10px;
+  border: 1px solid var(--rule); border-radius: 6px; background: var(--page);
+  font: inherit; color: var(--ink);
+  transition: border-color 150ms ease-out;
+}
+.input:hover { border-color: var(--hour); }
+.input:focus-visible { outline-offset: 0; border-color: var(--focus); }
+.input[aria-invalid='true'] { border-color: var(--margin); }
+.input::placeholder { color: var(--ink-3); }
+.num { width: 6.5rem; }
+.time { width: 9rem; }
+.inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.unit { color: var(--ink-2); font-size: 14px; }
+.sub { color: var(--ink-2); font-size: 13px; max-width: 56ch; }
+.warn { color: var(--margin); font-size: 13px; font-weight: 600; max-width: 56ch; }
+
+/* Segmented choice: off / ask / auto and the other enums. */
+.segment {
+  display: inline-flex; align-self: flex-start; flex-wrap: wrap;
+  border: 1px solid var(--rule); border-radius: 8px; padding: 3px; gap: 3px; background: var(--page-2);
+}
+.seg { position: relative; }
+.seg input, .day input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg span {
+  display: block; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+  font-size: 14px; font-weight: 500; color: var(--ink-2);
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.seg span:hover { color: var(--ink); }
+.seg input:checked + span { background: var(--page); color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--rule); }
+.seg[data-level='off'] input:checked + span { color: var(--ok); }
+.seg[data-level='ask'] input:checked + span { color: var(--hold); }
+.seg[data-level='auto'] input:checked + span { background: var(--margin); color: var(--margin-ink); box-shadow: none; }
+.seg input:focus-visible + span, .day input:focus-visible + span, .check input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.days { display: flex; flex-wrap: wrap; gap: 6px; }
+.day { position: relative; }
+.day span {
+  display: block; min-width: 3.25rem; padding: 6px 0; text-align: center; cursor: pointer;
+  border: 1px solid var(--rule); border-radius: 6px; font-size: 14px; color: var(--ink-2);
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+.day input:checked + span { background: var(--cloth); border-color: var(--cloth); color: var(--cloth-ink); font-weight: 600; }
+
+.check { display: inline-flex; align-items: center; gap: 10px; padding-top: 6px; cursor: pointer; align-self: flex-start; }
+.check input { width: 18px; height: 18px; accent-color: var(--cloth); }
+
+.feeds { display: flex; flex-direction: column; }
+.feeds li { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--rule-soft); min-width: 0; }
+.feed { font: 500 13px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; overflow-wrap: anywhere; min-width: 0; }
+.new { font-size: 12px; font-weight: 600; color: var(--hour); }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
+
+.button, .primary, .link { font: inherit; cursor: pointer; }
+.button {
+  min-height: 38px; padding: 6px 16px; border-radius: 6px;
+  border: 1px solid var(--rule); background: var(--page); color: var(--ink); font-weight: 500;
+}
+.button:hover:not(:disabled) { border-color: var(--hour); }
+.primary {
+  min-height: 38px; padding: 6px 18px; border-radius: 6px; border: 0;
+  background: var(--cloth); color: var(--cloth-ink); font-weight: 600;
+}
+.primary:hover:not(:disabled) { background: var(--hour); }
+.button:disabled, .primary:disabled { opacity: 0.45; cursor: default; }
+.link { margin-left: auto; padding: 2px 0; border: 0; background: none; color: var(--hour); font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; flex: none; }
+.inline .link { margin-left: 0; }
+.link:hover { color: var(--ink); }
+
+.fieldErr { color: var(--margin); font-size: 13px; font-weight: 600; }
+
+/* The save strip sits at the foot of the page and sticks while there is something to save. */
+.bar {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap;
+  margin: 40px -24px 0; padding: 14px 24px calc(14px + env(safe-area-inset-bottom));
+  background: var(--page); border-top: 1px solid var(--rule);
+}
+.bar[data-dirty] { border-top: 2px solid var(--margin); }
+.status { flex: 1 1 24rem; min-width: 0; font-size: 14px; }
+.status [data-tone='ok'] { color: var(--ok); font-weight: 500; }
+.status [data-tone='alert'] { color: var(--margin); font-weight: 600; }
+.status .link { margin: 6px 0 0; }
+.errs { margin-top: 4px; padding-left: 18px; list-style: disc; font-weight: 500; }
+.actions { display: flex; gap: 10px; flex: none; }
+
+@media (max-width: 760px) {
+  .main { padding: 32px 16px 0; }
+  .h1 { font-size: 28px; }
+  .row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .row[data-changed]::before { left: -10px; }
+  .label { padding-top: 0; }
+  .bar { margin: 32px -16px 0; padding-left: 16px; padding-right: 16px; }
+  .actions { width: 100%; }
+  .actions button { flex: 1; }
+}

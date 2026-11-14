@@ -72,3 +72,21 @@ export type HomeState =
   | { status: 'ready'; data: HomeData }
   | { status: 'not_set_up'; message: string }
   | { status: 'offline' };
+
+// Shape of GET /api/settings (skills/secretary/scripts/lib/settings-api.mjs).
+export type SettingValue = string | number | boolean | string[];
+
+export interface SettingsView {
+  vault: string;
+  root: string;
+  settings_path: string;
+  settings_found: boolean;
+  version: string;
+  platform: string;
+  values: Record<string, SettingValue>;
+  calendar_feeds: string[]; // redacted
+  read_only: { calendar_publish_command: string; publish_command_is_default: boolean; briefing_allowed_tools: string[] };
+}
+
+export interface SaveResult { changed: string[]; schedule_changed: boolean; settings: SettingsView }
+export interface SaveError { error: string; message: string; errors?: string[] }

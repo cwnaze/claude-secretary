@@ -45,9 +45,10 @@ skills/secretary/scripts/lib/
   wizard.mjs    interactive (readline) or --set driven setup; discovers vaults from Obsidian's obsidian.json
   guard.mjs     pure classify(toolName, toolInput) → gated action, decide(action, level) → hook decision
   views.mjs     read-only views (followupsDue, peopleDue, invoicesDue, expenseSummary, fmtEvents, logRows, dayRecap) for sec + dashboard
+  settings-api.mjs  Settings page: settingsView (redacted feeds, read-only keys), saveSettings (patch changed keys, validateSettings, version check)
   schedule.mjs  automatic briefings: launchd plists / crontab lines running `claude -p "/secretary:briefing <kind> scheduled"`
   dashboard.mjs homeData() for GET /api/home: events, briefing lead, drafts, blocked log rows, follow-ups, spend
-  server.mjs    `sec ui`: 127.0.0.1-only http server, Host check, GET/HEAD only, serves ui/ + /api/*
+  server.mjs    `sec ui`: 127.0.0.1-only http server, Host check, GET/HEAD except POST /api/settings (localhost Origin + JSON), serves ui/ + /api/*
 web/                             Next.js (app router, TS) source of the dashboard; static export, dev deps only
 ui/                              built dashboard (`npm run build:ui`), shipped in the package; commit it after UI changes
 test/sec.test.mjs                all tests (unit + CLI end-to-end in temp HOMEs)
@@ -146,8 +147,10 @@ contact_people. That is the product's core promise. Update README, safety.md, se
 
 - Design direction lives in `.impeccable/surfaces/web-app-page-tsx.md` (day-to-a-page diary: navy
   cloth bar, ivory page, blue hour rules, red ribbon at now). Tokens are in `web/app/globals.css`.
-- The UI is read-only except a future Settings page. Never add a write endpoint that touches
-  anything but `Settings.md`, and route settings writes through `validateSettings()`.
+- The UI is read-only except the Settings page (`POST /api/settings`, `lib/settings-api.mjs`). Never
+  add a write endpoint that touches anything but `Settings.md`, and route settings writes through
+  `validateSettings()`. Keys a shell or an unattended run uses (`calendar_publish_command`,
+  `briefing_allowed_tools`) stay in `READ_ONLY`; feed URLs only leave the server redacted.
 - Vault text (email subjects, briefing prose, names) is untrusted: render it as React text, never
   `dangerouslySetInnerHTML`.
 - After changing `web/`, run `npm run build:ui` and commit `ui/` so plugin users get it.
