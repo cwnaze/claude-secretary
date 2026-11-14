@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import type { Followup, HomeData, Level } from '@/lib/types';
 import { clockAmPm, fromCreated, minutesOf, money, monthName, relativeDay, shortDate, unlink } from '@/lib/time';
+import { obsidian } from '@/lib/obsidian';
+import { Markdown, sections } from './Markdown';
 import s from './DayNotes.module.css';
 
-const obsidian = (vault: string, path: string) =>
-  `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(path.replace(/\.md$/, ''))}`;
+const ALERT_BUCKETS = new Set(['Urgent', 'Suspicious']);
+const LISTED_BUCKETS = ['Urgent', 'Suspicious', 'Reply'];
 
 const SEND_STATE: Record<Level, { pill: string; tone: 'hold' | 'ok'; header: string }> = {
   off: { pill: 'You send it', tone: 'hold', header: 'sending is off' },
@@ -44,6 +46,11 @@ export function DayNotes({ data, today }: { data: HomeData; today: string }) {
   const viewingToday = data.date === today;
   const send = SEND_STATE[data.permissions.send_email] ?? SEND_STATE.off;
   const b = data.briefing;
+  const briefSections = b?.body && b.date === data.date ? sections(b.body) : [];
+  const [firstSection, ...moreSections] = briefSections;
+  const tri = data.triage;
+  const buckets = (tri?.buckets ?? []).filter((x) => x.count > 0);
+  const listed = buckets.filter((x) => LISTED_BUCKETS.includes(x.name)).flatMap((x) => x.items.map((it) => ({ ...it, bucket: x.name }))).slice(0, 5);
   const due = data.followups.due;
   const people = [...data.people.birthdays.map((p) => ({ key: `b-${p.path}`, path: p.path, name: p.name, line: p.in_days === 0 ? 'Birthday today' : `Birthday ${relativeDay(p.date, data.date)}` })),
     ...data.people.reconnect.map((p) => ({ key: `r-${p.path}`, path: p.path, name: p.name, line: p.last_contact ? `Last in touch ${shortDate(p.last_contact)}` : 'No contact logged yet' }))];
@@ -57,9 +64,26 @@ export function DayNotes({ data, today }: { data: HomeData; today: string }) {
     <section className={s.notes} aria-label="Notes for the day">
       <div>
         <Heading title={viewingToday ? 'Briefing' : `Briefing, ${shortDate(data.date)}`} aside={b?.created && b.date === data.date ? `written ${fromCreated(b.created, today)}` : undefined} />
-        {b?.summary && b.date === data.date ? (
+        {b && b.date === data.date && (b.summary || b.body) ? (
           <>
-            <p className={s.brief}>{b.summary}</p>
+            {b.summary && <p className={s.brief}>{b.summary}</p>}
+            {firstSection && (
+              <div className={s.section}>
+                {firstSection.heading && <h3 className={s.h3}>{firstSection.heading}</h3>}
+                <Markdown text={firstSection.body} vault={data.vault} />
+              </div>
+            )}
+            {moreSections.length > 0 && (
+              <details className={s.more2}>
+                <summary>Rest of the briefing <small>{moreSections.map((x) => x.heading).filter(Boolean).join(' · ')}</small></summary>
+                {moreSections.map((x, i) => (
+                  <div key={i} className={s.section}>
+                    {x.heading && <h3 className={s.h3}>{x.heading}</h3>}
+                    <Markdown text={x.body} vault={data.vault} />
+                  </div>
+                ))}
+              </details>
+            )}
             <p className={s.sub}><a href={obsidian(data.vault, b.path)}>Open {b.title} in Obsidian</a></p>
           </>
         ) : (
@@ -72,10 +96,40 @@ export function DayNotes({ data, today }: { data: HomeData; today: string }) {
 
       <div>
         <Heading title="Inbox" aside={`${data.drafts.length} ${data.drafts.length === 1 ? 'draft' : 'drafts'} · ${send.header}`} href="/inbox" linkLabel="Open inbox" />
-        {data.drafts.length + data.blocked.length === 0 ? (
-          <p className={s.empty}>No drafts waiting, and nothing was blocked{viewingToday ? ' today' : ''}.</p>
+        {tri ? (
+          <div className={s.triage}>
+            <p className={s.sub}>
+              Last triaged {fromCreated(tri.created ?? undefined, today) ?? relativeDay(tri.date, today)} · <a href={obsidian(data.vault, tri.path)}>open the triage note</a>
+            </p>
+            {tri.summary && <p className={s.triageLead}>{tri.summary}</p>}
+            {buckets.length > 0 && (
+              <ul className={s.buckets} aria-label="Mail by bucket">
+                {buckets.map((x) => (
+                  <li key={x.name} data-tone={ALERT_BUCKETS.has(x.name) ? 'alert' : undefined}><b>{x.count}</b> {x.name === 'Reply' ? 'to reply' : x.name.toLowerCase()}</li>
+                ))}
+              </ul>
+            )}
+            {listed.length > 0 && (
+              <ul>
+                {listed.map((it, i) => (
+                  <li key={`${it.bucket}-${i}`} className={s.row}>
+                    <div>
+                      <b>{it.subject || it.summary || 'Untitled'}</b>
+                      <span className={s.sub}>{[it.from, it.subject && it.summary].filter(Boolean).join(' · ')}</span>
+                    </div>
+                    <span className={s.pill} data-tone={ALERT_BUCKETS.has(it.bucket) ? 'alert' : 'hold'}>{it.bucket === 'Reply' ? 'Reply' : it.bucket}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         ) : (
-          <ul>
+          <p className={s.empty}>No triage yet. Ask Claude to “go through my inbox” and the summary will show here.</p>
+        )}
+        {data.drafts.length + data.blocked.length === 0 ? (
+          tri ? null : <p className={s.empty}>No drafts waiting, and nothing was blocked{viewingToday ? ' today' : ''}.</p>
+        ) : (
+          <ul className={tri ? s.after : undefined}>
             {data.blocked.map((r) => (
               <li key={`${r.when}-${r.target}`} className={s.row}>
                 <div>
@@ -100,7 +154,7 @@ export function DayNotes({ data, today }: { data: HomeData; today: string }) {
       </div>
 
       <div>
-        <Heading title="Follow-ups" aside={due.length ? `${due.length} due` : undefined} href="/follow-ups" linkLabel="All follow-ups" />
+        <Heading title="Follow-ups" aside={due.length ? `${due.length} due` : undefined} />
         {due.length === 0 ? (
           <p className={s.empty}>
             Nothing due{viewingToday ? ' today' : ''}.

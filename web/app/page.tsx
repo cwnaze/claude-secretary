@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { TopBar } from '@/components/TopBar';
 import { DayPage } from '@/components/DayPage';
 import { DayNotes } from '@/components/DayNotes';
+import { EventDetails } from '@/components/EventDetails';
 import { Message } from '@/components/Message';
 import { useHome } from '@/lib/useHome';
+import type { CalEvent } from '@/lib/types';
 import { addDays, minutesOf } from '@/lib/time';
 import s from './page.module.css';
 
@@ -18,6 +20,7 @@ function readDate(): string | null {
 export default function Home() {
   const [date, setDate] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState<CalEvent | null>(null);
   useEffect(() => { setDate(readDate()); setReady(true); }, []);
   const state = useHome(ready ? date : null);
 
@@ -60,7 +63,6 @@ export default function Home() {
   const nowMin = minutesOf(data.now);
   const counts = {
     '/inbox': { n: data.drafts.length + data.blocked.length, label: `${data.drafts.length} drafts, ${data.blocked.length} blocked` },
-    '/follow-ups': { n: data.followups.due.length, label: `${data.followups.due.length} due` },
   };
 
   return (
@@ -71,9 +73,11 @@ export default function Home() {
           data={data} today={today} nowMin={nowMin}
           onStep={(n) => go(addDays(data.date, n) === today ? null : addDays(data.date, n))}
           onToday={() => go(null)}
+          onOpen={setOpen}
         />
         <DayNotes data={data} today={today} />
       </main>
+      <EventDetails event={open} vault={data.vault} today={today} onClose={() => setOpen(null)} />
     </>
   );
 }

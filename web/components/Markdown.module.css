@@ -1,0 +1,22 @@
+.md { display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; line-height: 1.55; max-width: 70ch; }
+.md a { color: var(--hour); }
+.md a:hover { color: var(--ink); }
+.md code { font-size: 0.9em; padding: 0 4px; border-radius: 3px; background: var(--page-2); }
+.h { margin-top: 6px; font: 600 15.5px/1.3 var(--serif); }
+.p { text-wrap: pretty; }
+.list { display: flex; flex-direction: column; gap: 3px; padding-left: 22px; }
+ul.list { list-style: disc; }
+ol.list { list-style: decimal; }
+.list li::marker { color: var(--hour); }
+.list li[data-task] { list-style: none; position: relative; }
+.list li[data-task]::before {
+  content: ''; position: absolute; left: -20px; top: 0.35em; width: 11px; height: 11px;
+  border: 1.5px solid var(--hour); border-radius: 2px;
+}
+.list li[data-task='done'] { color: var(--ink-3); text-decoration: line-through; }
+.list li[data-task='done']::before { background: var(--hour); }
+.quote { padding-left: 12px; border-left: 2px solid var(--rule); color: var(--ink-2); }
+.tableWrap { overflow-x: auto; }
+.table { border-collapse: collapse; font-size: 13.5px; min-width: 60%; }
+.table th, .table td { text-align: left; padding: 5px 14px 5px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+.table th { font-weight: 600; color: var(--ink-2); font-size: 12.5px; border-bottom-color: var(--rule); }

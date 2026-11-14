@@ -93,6 +93,7 @@ function parseEventLines(raw) {
     summary: get('SUMMARY') ? unescapeText(get('SUMMARY').value) : '',
     location: get('LOCATION') ? unescapeText(get('LOCATION').value) : '',
     description: get('DESCRIPTION') ? unescapeText(get('DESCRIPTION').value) : '',
+    url: get('URL')?.value || '',
     status: (get('STATUS')?.value || '').toUpperCase(),
     transp: (get('TRANSP')?.value || '').toUpperCase(),
     dtstart: get('DTSTART') || null,
@@ -249,6 +250,7 @@ export function occurrences(cal, fromMs, toMs, defaultTz, { source = 'main' } = 
     else len = st.allDay ? 86400000 : 0;
     const base = {
       uid: ev.uid, summary: ev.summary, location: ev.location, allDay: st.allDay,
+      description: ev.description, url: ev.url,
       status: ev.status, transparent: ev.transp === 'TRANSPARENT', ours: ev.ours, source,
       recurring: !!ev.rrule || !!ev.recurrenceId,
     };

@@ -8,6 +8,7 @@
 - `sec briefing-data --recap` adds the day's log, completed follow-ups and new notes; `--date` accepts `tomorrow`/`+1d`.
 - `npx claude-secretary uninstall` now also removes the `cwnaze` marketplace (`--keep-marketplace` to skip). Opt-in deletes, each listed and confirmed first (`--yes` to skip the prompt): `--purge` (`~/.claude-secretary.json` and the cache), `--remove-vault` (the `Secretary/` folder in the vault, recursively) and `--remove-ics` (the local calendar file).
 - Web dashboard (`sec ui`): read-only briefing page on localhost with today's hours, drafts held for your OK, blocked attempts, follow-ups due, people this week and month-to-date spend. Light and dark follow the system. Other sections are placeholders.
+- Dashboard home page (#8): the full briefing (first section shown, the rest folded), the latest inbox triage (counts per bucket, urgent and reply threads), and assignment due times. Canvas assignments show in a "Due" list with their times (all-day ones are due 11:59 pm) and as markers on the hour grid, and no longer count as busy. Clicking any event opens its details: location, join-call and event links, description, the meeting note and its open follow-ups. The Schedule and Follow-ups placeholder pages are gone.
 - `lib/views.mjs` holds the read-only views shared by `sec` and the dashboard; `lib/dashboard.mjs` and `lib/server.mjs` are new.
 
 ## 1.0.0 — 2026-11-07
