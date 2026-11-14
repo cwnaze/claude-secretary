@@ -38,14 +38,15 @@ function longestFree(placed: Placed[], from: number, to: number): { start: numbe
 
 const duration = (m: number) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} m` : ''}` : `${m} m`);
 
-export function DayPage({ data, today, nowMin, onStep, onToday }: {
+export function DayPage({ data, today, nowMin, onStep, onToday, onOpen }: {
   data: HomeData; today: string; nowMin: number;
-  onStep: (days: number) => void; onToday: () => void;
+  onStep: (days: number) => void; onToday: () => void; onOpen: (e: CalEvent) => void;
 }) {
   const isToday = data.date === today;
   const isPast = data.date < today;
-  const allDay = data.events.filter((e) => e.allDay);
-  const placed = place(data.events.filter((e) => !e.allDay));
+  const deadlines = data.events.filter((e) => e.deadline && e.due).sort((a, b) => a.due!.localeCompare(b.due!) || (a.summary || '').localeCompare(b.summary || ''));
+  const allDay = data.events.filter((e) => e.allDay && !e.deadline);
+  const placed = place(data.events.filter((e) => !e.allDay && !e.deadline));
   const workStart = minutesOf(`0000-00-00T${data.work_start || '09:00'}`);
   const workEnd = minutesOf(`0000-00-00T${data.work_end || '17:00'}`);
   const first = Math.min(Math.floor(workStart / 60) - 1, ...placed.map((p) => Math.floor(p.start / 60)));
@@ -55,7 +56,9 @@ export function DayPage({ data, today, nowMin, onStep, onToday }: {
   const free = isPast ? null : longestFree(placed, isToday ? Math.max(workStart, Math.ceil(nowMin / 15) * 15) : workStart, workEnd);
   const y = (min: number) => `calc(${(min - h0 * 60) / 60} * var(--hour-h))`;
   const gone = (end: number) => isPast || (isToday && end <= nowMin);
-  const count = data.events.length;
+  const count = data.events.length - deadlines.length;
+  const dueGone = (e: CalEvent) => isPast || (isToday && e.due!.slice(0, 10) === today && minutesOf(e.due!) <= nowMin);
+  const marks = deadlines.filter((e) => e.due!.slice(0, 10) === data.date && !e.allDay && minutesOf(e.due!) >= h0 * 60 && minutesOf(e.due!) < h1 * 60);
 
   return (
     <section className={s.day} aria-labelledby="day-title">
@@ -63,6 +66,7 @@ export function DayPage({ data, today, nowMin, onStep, onToday }: {
         <h1 id="day-title">{dayTitle(data.date)}</h1>
         <p className={s.meta}>
           Week {isoWeek(data.date)} · {count === 0 ? 'nothing scheduled' : `${count} ${count === 1 ? 'event' : 'events'}`}
+          {deadlines.length > 0 && ` · ${deadlines.length} due`}
           {free && ` · ${duration(free.end - free.start)} open`}
         </p>
         <div className={s.step} role="group" aria-label="Change day">
@@ -79,9 +83,29 @@ export function DayPage({ data, today, nowMin, onStep, onToday }: {
         <ul className={s.notice}>{data.calendar_warnings.map((w) => <li key={w}>{w}</li>)}</ul>
       )}
 
+      {deadlines.length > 0 && (
+        <div className={s.due}>
+          <h2>Due{isToday ? ' today' : ''}</h2>
+          <ul aria-label="Assignments and deadlines">
+            {deadlines.map((e, i) => (
+              <li key={`${e.uid ?? i}-${e.due}`} data-past={dueGone(e) || undefined}>
+                <button type="button" onClick={() => onOpen(e)} aria-haspopup="dialog">
+                  <time dateTime={e.due}>{clockAmPm(minutesOf(e.due!))}</time>
+                  <span>{e.summary || 'Untitled'}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {allDay.length > 0 && (
         <ul className={s.allDay} aria-label="All day">
-          {allDay.map((e, i) => <li key={e.uid ?? i}><span>All day</span>{e.summary || 'Untitled'}</li>)}
+          {allDay.map((e, i) => (
+            <li key={e.uid ?? i}>
+              <button type="button" onClick={() => onOpen(e)} aria-haspopup="dialog"><span>All day</span>{e.summary || 'Untitled'}</button>
+            </li>
+          ))}
         </ul>
       )}
 
@@ -103,12 +127,23 @@ export function DayPage({ data, today, nowMin, onStep, onToday }: {
                 data-short={short || undefined}
                 style={{ top: y(start), height: `calc(${(end - start) / 60} * var(--hour-h) - 3px)`, left: `calc(var(--gutter) + (100% - var(--gutter)) * ${lane / lanes})`, width: `calc((100% - var(--gutter)) / ${lanes} - 4px)` }}
               >
-                <b>{e.summary || 'Untitled'}</b>
-                <small>{range(start, end)}<span className={s.loc}>{e.location && ` · ${e.location}`}{e.source && e.source !== 'main' && ' · feed'}</span></small>
+                <button type="button" onClick={() => onOpen(e)} aria-haspopup="dialog">
+                  <b>{e.summary || 'Untitled'}</b>
+                  <small>{range(start, end)}<span className={s.loc}>{e.location && ` · ${e.location}`}{e.source && e.source !== 'main' && ' · feed'}</span></small>
+                </button>
               </li>
             );
           })}
         </ol>
+
+        {marks.map((e, i) => (
+          <button
+            key={`m-${e.uid ?? i}`} type="button" className={s.dueMark} data-past={dueGone(e) || undefined}
+            style={{ top: y(minutesOf(e.due!)) }} onClick={() => onOpen(e)} aria-haspopup="dialog"
+          >
+            <span><i>Due {clockAmPm(minutesOf(e.due!))}</i>{e.summary || 'Untitled'}</span>
+          </button>
+        ))}
 
         {free && (
           <div className={s.free} style={{ top: y(free.start), height: `calc(${(free.end - free.start) / 60} * var(--hour-h) - 3px)` }}>
@@ -117,7 +152,7 @@ export function DayPage({ data, today, nowMin, onStep, onToday }: {
           </div>
         )}
 
-        {count === 0 && !free && <p className={s.empty}>Nothing on the calendar.</p>}
+        {count === 0 && !free && marks.length === 0 && <p className={s.empty}>Nothing on the calendar.</p>}
 
         {isToday && nowMin >= h0 * 60 && nowMin < h1 * 60 && (
           <div className={s.ribbon} style={{ top: y(nowMin) }} role="img" aria-label={`Now, ${clockAmPm(nowMin)}`}>
