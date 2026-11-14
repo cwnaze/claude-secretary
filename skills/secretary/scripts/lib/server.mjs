@@ -65,7 +65,7 @@ function readJson(req) {
   });
 }
 
-// Next's static export writes /schedule as schedule.html (or schedule/index.html).
+// Next's static export writes /inbox as inbox.html (or inbox/index.html).
 export function resolveStatic(uiDir, urlPath) {
   let p;
   try { p = decodeURIComponent(urlPath.split('?')[0]); } catch { return null; }

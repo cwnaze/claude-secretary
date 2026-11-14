@@ -11,7 +11,7 @@ import { zonedToUtc, formatLocal } from '../skills/secretary/scripts/lib/tz.mjs'
 import { parseFrontmatter, setNoteFields, readNoteText } from '../skills/secretary/scripts/lib/yaml.mjs';
 import { classify, decide } from '../skills/secretary/scripts/lib/guard.mjs';
 import { createServer, listen, isLocalHost, resolveStatic } from '../skills/secretary/scripts/lib/server.mjs';
-import { leadParagraph } from '../skills/secretary/scripts/lib/dashboard.mjs';
+import { leadParagraph, briefingRest, triageBuckets, deadlineOf, eventLinks, cleanDescription } from '../skills/secretary/scripts/lib/dashboard.mjs';
 import { mapAppleEvents, appleSupported } from '../skills/secretary/scripts/lib/apple.mjs';
 import { loadConfig, defaultSettings } from '../skills/secretary/scripts/lib/config.mjs';
 import { briefingJobs, claudeArgs, cronLine, plist } from '../skills/secretary/scripts/lib/schedule.mjs';
@@ -266,6 +266,33 @@ test('dashboard: briefing lead paragraph skips headings and lists', () => {
   assert.equal(leadParagraph('## Only headings\n- list'), null);
 });
 
+test('dashboard: briefing body, triage buckets, deadlines and event links', () => {
+  assert.equal(briefingRest('# Thursday\n\nTwo things today.\n\n## Top priorities\n1. a'), '## Top priorities\n1. a');
+  assert.equal(briefingRest('# Thursday\n\n## Top priorities\n1. a'), '## Top priorities\n1. a', 'no lead: body kept whole');
+
+  const buckets = triageBuckets([
+    '# Triage', '', 'Three need you.', '',
+    '## 🔴 Urgent (1)', '| Sender | Subject | Summary | Action |', '|---|---|---|---|', '| **[[Jane Doe|Jane]]** | Q3 plan | Sign-off by Fri | Drafted |', '',
+    '## ✉️ Reply', '- Landlord: lease renewal', '- Sam: lunch?', '',
+    '## 🗑️ Archive', '14 newsletters and promos.', '', '## Notes', '- not a bucket',
+  ].join('\n'));
+  assert.deepEqual(buckets.map((b) => [b.name, b.count]), [['Urgent', 1], ['Reply', 2], ['Archive', 14]]);
+  assert.deepEqual(buckets[0].items[0], { from: 'Jane', subject: 'Q3 plan', summary: 'Sign-off by Fri' });
+
+  // Canvas: all-day assignment = due 11:59 pm; zero-length timed event = due at that time
+  assert.equal(deadlineOf({ uid: 'event-assignment-1', allDay: true, start: '2026-11-12', end: '2026-11-13' }), '2026-11-12T23:59');
+  assert.equal(deadlineOf({ uid: 'event-assignment-2', allDay: false, start: '2026-11-12T15:00', end: '2026-11-12T15:00' }), '2026-11-12T15:00');
+  assert.equal(deadlineOf({ uid: 'x', allDay: false, start: '2026-11-12T09:00', end: '2026-11-12T09:00' }), '2026-11-12T09:00');
+  assert.equal(deadlineOf({ uid: 'holiday', allDay: true, start: '2026-11-26', end: '2026-11-27' }), null);
+  assert.equal(deadlineOf({ uid: 'x', allDay: false, start: '2026-11-12T09:00', end: '2026-11-12T10:00' }), null);
+
+  assert.deepEqual(eventLinks({ url: 'https://canvas.example/cal#a1', description: 'Join: https://ufl.zoom.us/j/123 now' }), { link: 'https://canvas.example/cal#a1', join: 'https://ufl.zoom.us/j/123' });
+  assert.deepEqual(eventLinks({ location: 'https://meet.google.com/abc-defg-hij' }), { link: undefined, join: 'https://meet.google.com/abc-defg-hij' });
+  assert.deepEqual(eventLinks({ url: 'javascript:alert(1)', location: 'Room 101' }), { link: undefined, join: undefined });
+  assert.equal(cleanDescription('------\nUnit 3\n------\n\n\n\nRead ch. 4'), 'Unit 3\n\nRead ch. 4');
+  assert.equal(cleanDescription(''), undefined);
+});
+
 test('dashboard server: read-only API, localhost only, no path escapes', async () => {
   const { home, run } = sandbox();
   assert.equal(run('init', '--non-interactive', '--vault', path.join(home, 'V'), '--set', `timezone=${NY}`, '--set', `calendar_file=${path.join(home, 'cal.ics')}`).code, 0);
@@ -273,6 +300,13 @@ test('dashboard server: read-only API, localhost only, no path escapes', async (
   run('note', 'new', '--type', 'draft', '--title', 'Old one', '--field', 'status=sent');
   run('note', 'new', '--type', 'briefing', '--title', 'Briefing 2026-11-10', '--body', '## Today\n\nYour afternoon is open.');
   run('log', '--action', 'send_email', '--target', 'mcp__x__send_email', '--summary', 'blocked by guard', '--status', 'blocked');
+  run('note', 'new', '--type', 'triage', '--title', 'Triage 2026-11-10T0815', '--body', '## 🔴 Urgent\n| From | Subject | Summary |\n|---|---|---|\n| Jane | Q3 | Sign-off |');
+  run('note', 'new', '--type', 'meeting', '--title', '2026-11-10 Standup', '--field', 'event_uid=standup-1', '--field', 'status=prep');
+  run('note', 'new', '--type', 'followup', '--title', 'Send notes to Sam', '--field', 'source=[[2026-11-10 Standup]]', '--field', 'due=2026-11-11');
+  fs.writeFileSync(path.join(home, 'cal.ics'), ['BEGIN:VCALENDAR', 'VERSION:2.0',
+    'BEGIN:VEVENT', 'UID:event-assignment-9', 'DTSTART;VALUE=DATE:20261110', 'SUMMARY:HW7 [PHY2048]', 'URL;VALUE=URI:https://canvas.example/cal', 'DESCRIPTION:------\\nDo problems 1-5', 'END:VEVENT',
+    'BEGIN:VEVENT', 'UID:standup-1', 'DTSTART;TZID=America/New_York:20261110T093000', 'DTEND;TZID=America/New_York:20261110T094500', 'SUMMARY:Standup', 'LOCATION:https://acme.zoom.us/j/42', 'END:VEVENT',
+    'END:VCALENDAR', ''].join('\r\n'));
   const ui = fs.mkdtempSync(path.join(os.tmpdir(), 'sec-ui-'));
   fs.writeFileSync(path.join(ui, 'index.html'), 'home'); fs.writeFileSync(path.join(ui, 'inbox.html'), 'inbox'); fs.writeFileSync(path.join(ui, '404.html'), 'missing');
   fs.writeFileSync(path.join(home, 'secret.txt'), 'nope');
@@ -298,6 +332,14 @@ test('dashboard server: read-only API, localhost only, no path escapes', async (
     assert.equal(d.briefing.summary, 'Your afternoon is open.');
     assert.equal(d.permissions.send_email, 'off');
     assert.ok(Array.isArray(d.events));
+    const hw = d.events.find((e) => e.uid === 'event-assignment-9');
+    assert.equal(hw.deadline, true); assert.equal(hw.due, '2026-11-10T23:59'); assert.equal(hw.busy, false);
+    assert.equal(hw.link, 'https://canvas.example/cal'); assert.equal(hw.description, 'Do problems 1-5');
+    const standup = d.events.find((e) => e.uid === 'standup-1');
+    assert.equal(standup.join, 'https://acme.zoom.us/j/42');
+    assert.equal(standup.meeting.title, '2026-11-10 Standup');
+    assert.deepEqual(standup.tasks.map((x) => x.title), ['Send notes to Sam']);
+    assert.deepEqual(d.triage.buckets, [{ name: 'Urgent', count: 1, items: [{ from: 'Jane', subject: 'Q3', summary: 'Sign-off' }] }]);
     assert.ok(isLocalHost('localhost:7410') && isLocalHost('127.0.0.1') && !isLocalHost('localhost.evil.com'));
   } finally { server.close(); }
 });
@@ -545,7 +587,7 @@ test('apple: EventKit rows map to the occurrences() event shape', () => {
     { uid: 'b', summary: 'Holiday', location: '', calendar: 'US Holidays', start: 1794460000, end: 1794546400, allDay: true, availability: 1, status: 0, recurring: false },
     { uid: 'c', summary: 'Gone', location: '', calendar: '', start: 1794509700, end: 1794512700, allDay: false, availability: 0, status: 3, recurring: false },
   ]);
-  assert.deepEqual(busy, { uid: 'a', summary: 'Lecture', location: 'CAR 0100', allDay: false, status: undefined, transparent: false, ours: false, source: 'apple:Class Times', recurring: true, start: 1794509700000, end: 1794512700000 });
+  assert.deepEqual(busy, { uid: 'a', summary: 'Lecture', location: 'CAR 0100', allDay: false, description: undefined, url: undefined, status: undefined, transparent: false, ours: false, source: 'apple:Class Times', recurring: true, start: 1794509700000, end: 1794512700000 });
   assert.equal(free.transparent, true);
   assert.equal(free.location, undefined);
   assert.equal(cancelled.status, 'CANCELLED');

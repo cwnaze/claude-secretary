@@ -3,9 +3,7 @@ import s from './TopBar.module.css';
 
 export const SECTIONS = [
   { href: '/', label: 'Briefing' },
-  { href: '/schedule', label: 'Schedule' },
   { href: '/inbox', label: 'Inbox' },
-  { href: '/follow-ups', label: 'Follow-ups' },
   { href: '/contacts', label: 'Contacts' },
   { href: '/expenses', label: 'Expenses' },
   { href: '/settings', label: 'Settings' },
